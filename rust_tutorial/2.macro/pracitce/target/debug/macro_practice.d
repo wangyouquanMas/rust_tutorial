@@ -1,0 +1,1 @@
+/home/ubuntu/rust_tutorial/2.macro/pracitce/target/debug/macro_practice: /home/ubuntu/rust_tutorial/2.macro/pracitce/src/examples.rs /home/ubuntu/rust_tutorial/2.macro/pracitce/src/macros.rs /home/ubuntu/rust_tutorial/2.macro/pracitce/src/main.rs
