@@ -1,1 +1,0 @@
-/home/ubuntu/rust_tutorial/3.proc_macro/practice/target/debug/proc_macro_example: /home/ubuntu/rust_tutorial/3.proc_macro/practice/src/lib.rs /home/ubuntu/rust_tutorial/3.proc_macro/practice/src/main.rs
