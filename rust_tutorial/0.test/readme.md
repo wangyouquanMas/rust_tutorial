@@ -12,8 +12,6 @@ fn test_add() {
 这样可以避免生成不必要的代码。
 
 
-
-
 2. 如何输出日志
 命令：RUST_LOG=info cargo test -- --nocapture
 To ensure the logs are immediately visible, you can run the test with the --nocapture flag

@@ -22,6 +22,11 @@ fn main() {
         is_student: false,
     };
 
+
+    // 直接赋值给可变引用
+    alice.name = String::from("I am actually Bob");
+
+
     // 2. 结构体字段访问
     println!("Alice's name: {}", alice.name);
     println!("Alice's age: {}", alice.age);
