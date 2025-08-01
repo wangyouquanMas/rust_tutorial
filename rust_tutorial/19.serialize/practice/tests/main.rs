@@ -39,7 +39,9 @@ fn test_try_serialize(){
         // 2. `name_len` (u32) -> 5 (length of "Alice") -> [5, 0, 0, 0]
         // 3. `name` (String) -> "Alice" -> [65, 108, 105, 99, 101]      
     
-
+        
+    //打印字节数组时，Rust 会显示字节的 十进制 值。即 [42, 0, 0, 0] 
+    // 表示这四个字节的十进制值分别为 42、0、0 和 0。
     println!("Serialized data: {:?}", serialized_data);
 
     let expected: Vec<u8> = vec![
