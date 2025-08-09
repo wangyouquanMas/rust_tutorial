@@ -6,7 +6,9 @@ mod fixed_point_64 {
 #[test]
 fn test_q64_64_attributes() {
     // Initialize r as a fixed-point value (1.5 in Q64.64 format)
-    let mut r: u128 = 13692147630154332393;
+    //r：9453956337776142641  -》128 -》 is r more thant two 1 
+    //
+    let mut r: u128 = 9453956337776142641;
 
     // We want to square the value of r and check for wraparound.
     // let mut squared_r = r * r;
@@ -35,8 +37,13 @@ fn test_q64_64_attributes() {
 
     r *=r;  
 
+    // r = 103287281588899644513467040504925884921;
+    //127 : 1001101101101000110100000100111001110111000101100010000110001101111100111001101111011101100101101011100101101111001000111111001
+   
+    // r = 187474906725940900718118175667529106449;
+    //128： 10001101000010100101101010001010000001000100110110000101101101010010001111010000100101001110100110010101001000101100010000010001
     
-    //10001101000010100101101010001010000001000100110110000101101101010010001111010000100101001110100110010101001000101100010000010001
+    // Why 127: With r normalized to [1,2), r² is in [1,4). In the squared fixed-point layout, bit 127 is the threshold for 2.0, so that bit being 1 means r² ≥ 2.
     println!("r after square: {:b}", r);
     let is_r_more_than_two = r >> 127 as u32;
     println!("is_r_more_than_two:{}",is_r_more_than_two);

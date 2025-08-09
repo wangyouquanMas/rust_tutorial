@@ -3,9 +3,13 @@ mod fixed_point_64 {
     pub const Q64: u128 = 1 << 64;
 }
 
+mod fixed_point_32 {
+    pub const Q32: u128 = 1 << 32;
+}
+
 #[test]
 fn test_price_to_sqrt_price_x64() {
-    let price = 4.4;
+    let price = 1.6;
     let decimals_0 = 6;
     let decimals_1 = 6;
 
@@ -17,6 +21,46 @@ fn test_price_to_sqrt_price_x64() {
 
     assert_eq!(price, price_from_x64);
 }
+
+#[test]
+fn test_sqrt_price_x64_to_price(){
+    let sqrt_price_x64 = 1268044770081505280;
+    let decimals_0 = 6;
+    let decimals_1 = 6;
+
+    let price = sqrt_price_x64_to_price(sqrt_price_x64, decimals_0, decimals_1);
+    println!("original price is: {}", price);
+
+    // assert_eq!(price, 4.4);
+}
+
+
+#[test]
+fn test_sqrt_price_x32_to_price(){
+    let sqrt_price_x32 = 295239680;
+    let decimals_0 = 6;
+    let decimals_1 = 6;
+
+    let price = sqrt_price_x32_to_price_with_no_pow(sqrt_price_x32, decimals_0, decimals_1);
+    println!("x32 original price is: {}", price);
+
+    // assert_eq!(price, 4.4);
+}
+
+
+pub fn sqrt_price_x64_to_price_with_no_pow(price: u128, decimals_0: u8, decimals_1: u8) -> f64 {
+    from_x64_price(price)* multipler(decimals_0) / multipler(decimals_1)
+}
+
+pub fn sqrt_price_x32_to_price_with_no_pow(price: u128, decimals_0: u8, decimals_1: u8) -> f64 {
+    from_x64_price(price)* multipler(decimals_0) / multipler(decimals_1)
+}
+
+pub fn from_x32_price(price: u128) -> f64 {
+    price as f64 / fixed_point_32::Q32 as f64
+}
+
+
 
 #[test]
 fn test_log2() {
