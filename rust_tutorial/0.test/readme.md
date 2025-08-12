@@ -29,3 +29,18 @@ println!("Account writable: {}", account_info.is_writable);
 "Account writable: {}" 是格式化字符串。
 account_info.is_writable 是将被插入的值，它是 bool 类型。
 {} 占位符会将 account_info.is_writable 的值插入到字符串中，并打印出来。
+
+
+4. 如何快速测试合约？
+如何在合约中打印日志？
+4.1 启动local validator 
+命令： solana-test-validator
+4.2 将rpc设置为 localnet
+solana config set --url localhost
+4.3 给钱包添加solana，当作测试币
+solana airdrop 1000
+4.4 给合约添加日志
+msg!()
+4.5 编译合约
+
+4.6 部署合约

@@ -16,6 +16,8 @@ fn test_price_to_sqrt_price_x64() {
     let sqrt_price_x64 = price_to_sqrt_price_x64(price, decimals_0, decimals_1);
     println!("sqrt_price_x64: {}", sqrt_price_x64);
 
+
+    let sqrt_price_x64 = 583337266871351552;
     let price_from_x64 = sqrt_price_x64_to_price(sqrt_price_x64, decimals_0, decimals_1);
     println!("price_from_x64: {}", price_from_x64);
 
