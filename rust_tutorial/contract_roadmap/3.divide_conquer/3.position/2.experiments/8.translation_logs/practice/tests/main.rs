@@ -7,7 +7,7 @@ fn fetch_logs_from_live_rpc() {
     // let sig = std::env::var("SIG").expect("set SIG");
 
     let rpc_url = "http://127.0.0.1:8899";
-    let sig = "CeDTWJ6tMFueAZFxwkre1t3Q47SnPHQa1Mj1aqNZ7cUN53Km86TGbdS5sUgPBxpR1kHHKNiEYYNraoT5H9YVkaz";
+    let sig = "5CcQa9DBrUEcVb2X8DLN7MN6cVrSqd3i8zD23eCaetAsGTHevtnjv4SBBhVW9znFKq2k9ukYKp3YFkZmMN9ysTpe";
 
     let logs = get_transaction_logs(&rpc_url, &sig).expect("fetch logs");
 
