@@ -40,7 +40,15 @@ solana config set --url localhost
 4.3 给钱包添加solana，当作测试币
 solana airdrop 1000
 4.4 给合约添加日志
-msg!()
+
+msg!()日志在哪里看? 查看实验8
+The msg!() macro in Solana is used to print simple string messages or formatted strings directly to the program log. This is the standard way to output logs for debugging or informational purposes in Rust-based Solana programs
+
+emit!() 
+The emit!() macro, provided by the Anchor framework, is designed specifically for emitting structured events. When you call emit!(), it serializes an event struct and writes it to the program log as base64-encoded binary data (prefixed by Program data:). This enables off-chain clients to parse and subscribe to these events in a structured manner, rather than just reading plain text log
+
+https://www.anchor-lang.com/docs/features/events
+
 4.5 编译合约
 
 4.6 部署合约

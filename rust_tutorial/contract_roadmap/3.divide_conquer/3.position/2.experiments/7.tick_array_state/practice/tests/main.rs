@@ -88,11 +88,16 @@ fn print_tick_array_state() {
         let tick = t.tick;
         let liquidity_gross = t.liquidity_gross;
         let liquidity_net = t.liquidity_net;
-        if liquidity_gross != 0 || tick != 0 {
-            println!(
-                "tick[{}]: tick={}, liquidity_gross={}, liquidity_net={}",
-                i, tick, liquidity_gross, liquidity_net
-            );
-        }
+
+        // if liquidity_gross != 0 || tick != 0 {
+        //     println!(
+        //         "tick[{}]: tick={}, liquidity_gross={}, liquidity_net={}",
+        //         i, tick, liquidity_gross, liquidity_net
+        //     );
+        // }
+        println!(
+            "tick[{}]: tick={}, liquidity_gross={}, liquidity_net={}",
+            i, tick, liquidity_gross, liquidity_net
+        );
     }
 }
