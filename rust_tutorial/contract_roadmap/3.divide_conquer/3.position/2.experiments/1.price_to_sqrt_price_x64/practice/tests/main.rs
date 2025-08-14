@@ -9,7 +9,7 @@ mod fixed_point_32 {
 
 #[test]
 fn test_price_to_sqrt_price_x64() {
-    let price = 0.00024;
+    let price = 0.01;
     let decimals_0 = 6;
     let decimals_1 = 6;
 
@@ -17,7 +17,7 @@ fn test_price_to_sqrt_price_x64() {
     println!("sqrt_price_x64: {}", sqrt_price_x64);
 
 
-    let sqrt_price_x64 = 583337266871351552;
+    let sqrt_price_x64 = 652190891266639104;
     let price_from_x64 = sqrt_price_x64_to_price(sqrt_price_x64, decimals_0, decimals_1);
     println!("price_from_x64: {}", price_from_x64);
 
@@ -26,7 +26,7 @@ fn test_price_to_sqrt_price_x64() {
 
 #[test]
 fn test_sqrt_price_x64_to_price(){
-    let sqrt_price_x64 = 1268044770081505280;
+    let sqrt_price_x64 = 517920522498632426;
     let decimals_0 = 6;
     let decimals_1 = 6;
 
