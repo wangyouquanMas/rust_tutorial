@@ -37,6 +37,25 @@ fn derive_tick_array_pda(program_id: &Pubkey, pool_id: &Pubkey, start_index: i32
     Pubkey::find_program_address(&[seed, pool_id.as_ref(), &be], program_id).0
 }
 
+fn decode_q64_64(value: u128) -> f64 {
+    // Q64.64 format: 64 bits for integer part, 64 bits for fractional part
+    let integer_part = (value >> 64) as u64;
+    let fractional_part = (value & 0xFFFFFFFFFFFFFFFF) as u64;
+    
+    // Convert fractional part to decimal using u128 to avoid overflow
+    let fractional_decimal = fractional_part as f64 / (1u128 << 64) as f64;
+    
+    integer_part as f64 + fractional_decimal
+}
+
+fn decode_q64_64_signed(value: i128) -> f64 {
+    if value >= 0 {
+        decode_q64_64(value as u128)
+    } else {
+        -decode_q64_64((-value) as u128)
+    }
+}
+
 #[test]
 fn print_tick_array_state() {
     // Set these via env or hardcode for your setup.
@@ -57,7 +76,7 @@ fn print_tick_array_state() {
     // let pool_id = Pubkey::from_str(&pool_id).expect("bad POOL_ID");
     // let tick_array_pda = derive_tick_array_pda(&program_id, &pool_id, start_index);
 
-    let tick_array_pda = Pubkey::from_str("CPswU2jTWgswxkSqQ4xYce9Kj8EJJrp4z2tMQzK1URfX").expect("bad TICK_ARRAY_PDA");
+    let tick_array_pda = Pubkey::from_str("14AHDFr6fuobxhRJvWM5LRsGgHsN4vPdPwhaiyx3rYqM").expect("bad TICK_ARRAY_PDA");
 
     let client = RpcClient::new(rpc_url);
     let data = client
@@ -89,15 +108,13 @@ fn print_tick_array_state() {
         let liquidity_gross = t.liquidity_gross;
         let liquidity_net = t.liquidity_net;
 
-        // if liquidity_gross != 0 || tick != 0 {
-        //     println!(
-        //         "tick[{}]: tick={}, liquidity_gross={}, liquidity_net={}",
-        //         i, tick, liquidity_gross, liquidity_net
-        //     );
-        // }
+        // Decode liquidity values from Q64.64 format
+        let liquidity_gross_decoded = decode_q64_64(liquidity_gross);
+        let liquidity_net_decoded = decode_q64_64_signed(liquidity_net);
+
         println!(
-            "tick[{}]: tick={}, liquidity_gross={}, liquidity_net={}",
-            i, tick, liquidity_gross, liquidity_net
+            "tick[{}]: tick={}, liquidity_gross={} (raw: {}), liquidity_net={} (raw: {})",
+            i, tick, liquidity_gross_decoded, liquidity_gross, liquidity_net_decoded, liquidity_net
         );
     }
 }
