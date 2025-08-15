@@ -9,8 +9,8 @@ mod fixed_point_32 {
 
 #[test]
 fn test_price_to_sqrt_price_x64() {
-    let price = 0.01;
-    let decimals_0 = 6;
+    let price = 1.25;
+    let decimals_0 = 9;
     let decimals_1 = 6;
 
     let sqrt_price_x64 = price_to_sqrt_price_x64(price, decimals_0, decimals_1);
