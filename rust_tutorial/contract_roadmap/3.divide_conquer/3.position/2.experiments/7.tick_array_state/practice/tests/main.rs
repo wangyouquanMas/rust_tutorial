@@ -76,7 +76,7 @@ fn print_tick_array_state() {
     // let pool_id = Pubkey::from_str(&pool_id).expect("bad POOL_ID");
     // let tick_array_pda = derive_tick_array_pda(&program_id, &pool_id, start_index);
 
-    let tick_array_pda = Pubkey::from_str("14AHDFr6fuobxhRJvWM5LRsGgHsN4vPdPwhaiyx3rYqM").expect("bad TICK_ARRAY_PDA");
+    let tick_array_pda = Pubkey::from_str("DCB4z7hPT4XTdTYdNu1fU7jm26jzhJcEDz3YQ6HXFny").expect("bad TICK_ARRAY_PDA");
 
     let client = RpcClient::new(rpc_url);
     let data = client
