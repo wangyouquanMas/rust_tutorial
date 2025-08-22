@@ -9,15 +9,15 @@ mod fixed_point_32 {
 
 #[test]
 fn test_price_to_sqrt_price_x64() {
-    let price = 1.25;
+    let price = 0.9;
     let decimals_0 = 9;
     let decimals_1 = 6;
 
     let sqrt_price_x64 = price_to_sqrt_price_x64(price, decimals_0, decimals_1);
-    println!("sqrt_price_x64: {}", sqrt_price_x64);
+    println!("111sqrt_price_x64: {}", sqrt_price_x64);
 
 
-    let sqrt_price_x64 = 652190891266639104;
+    // let sqrt_price_x64 = 652190891266639104;
     let price_from_x64 = sqrt_price_x64_to_price(sqrt_price_x64, decimals_0, decimals_1);
     println!("price_from_x64: {}", price_from_x64);
 
@@ -122,7 +122,13 @@ fn log2(x: f64) -> f64 {
 }
 
 pub fn sqrt_price_x64_to_price(price: u128, decimals_0: u8, decimals_1: u8) -> f64 {
-    from_x64_price(price).powi(2) * multipler(decimals_0) / multipler(decimals_1)
+    let mut step = from_x64_price(price);
+    println!("step: {}", step);
+
+    let result =  from_x64_price(price).powi(2);
+    println!("result: {}", result);
+
+    result * multipler(decimals_0) / multipler(decimals_1)
 }
 
 pub fn from_x64_price(price: u128) -> f64 {

@@ -5,7 +5,7 @@
 
 #[test]
 fn test_msb() {
-    let sqrt_price_x64: u128 = 2; 
+    let sqrt_price_x64: u128 = 553402322211286528; 
 
     // Determine log_b(sqrt_ratio). First by calculating integer portion (msb)
     let leading_zeros = sqrt_price_x64.leading_zeros();
