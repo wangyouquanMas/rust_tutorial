@@ -35,6 +35,10 @@ account_info.is_writable 是将被插入的值，它是 bool 类型。
 如何在合约中打印日志？
 4.1 启动local validator 
 命令： solana-test-validator
+
+本地节点，解析速度太慢了，经常出现一笔交易，要过好几分钟才能在浏览器查看，
+
+
 4.2 将rpc设置为 localnet
 solana config set --url localhost
 4.3 给钱包添加solana，当作测试币
@@ -48,6 +52,10 @@ emit!()
 The emit!() macro, provided by the Anchor framework, is designed specifically for emitting structured events. When you call emit!(), it serializes an event struct and writes it to the program log as base64-encoded binary data (prefixed by Program data:). This enables off-chain clients to parse and subscribe to these events in a structured manner, rather than just reading plain text log
 
 https://www.anchor-lang.com/docs/features/events
+
+
+
+
 
 4.5 编译合约
 
