@@ -70,7 +70,7 @@ fn print_pool_state() {
     // Set POOL_ID and RPC_URL via env for flexibility
     // let pool_id = std::env::var("POOL_ID").expect("POOL_ID not set");
     let rpc_url = std::env::var("RPC_URL").unwrap_or_else(|_| "http://127.0.0.1:8899".to_string());
-    let pool_id = Pubkey::from_str("4xtXs8tUtGZmaBPzoVnfFDGVVBTUaSgV5CanLpSDDgJT").expect("bad POOL_ID");
+    let pool_id = Pubkey::from_str("Crt5PYs5s2UVVWM6A3iqu9YyugQNsFpdvY54WxJZdboD").expect("bad POOL_ID");
 
     // let pool_id = Pubkey::from_str(&pool_id).expect("bad POOL_ID");
 
