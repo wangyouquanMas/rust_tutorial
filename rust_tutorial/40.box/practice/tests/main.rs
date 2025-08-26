@@ -1,26 +1,22 @@
-use std::collections::VecDeque;
+#[cfg(test)]
+mod tests {
+    /// 基础：Box<T> 的“拆箱”（拿到 T 的所有权）与借用
+    #[test]
+    fn box_unpack_and_borrow() {
+        #[derive(Debug, PartialEq)]
+        struct Foo(u32);
 
-#[test]
-fn test_vec_deque() {
-    let mut deque: VecDeque<i32> = VecDeque::new();
+        // 拆箱：消耗 Box，拿到内部值
+        let b = Box::new(Foo(7));
+        let foo: Foo = *b; // 等价：Box::into_inner(b)
+        assert_eq!(foo, Foo(7));
 
-    // Adding elements
-    deque.push_back(1);
-    deque.push_back(2);
-    deque.push_front(0);
-
-    // Removing elements
-    let back = deque.pop_back();  // Removes 2
-    let front = deque.pop_front(); // Removes 0
-
-    // In the returned result of the pop_back() and pop_front() methods, the value type is Option<T>, where T is the type of elements in the VecDeque.
-    println!("Removed from back: {:?}", back.unwrap());
-    println!("Removed from front: {:?}", front);
-    println!("Remaining deque: {:?}", deque);
-
-    if let Some(x) =  deque.front(){
-        println!("1111front: {}", x);
+        // 借用：不移动内部值，只拿引用
+        let b = Box::new(123_i32);
+        let r: &i32 = b.as_ref();
+        println!("r: {}", r);
+        assert_eq!(*r, 123);
+        // 仍可使用 b，自身并未被消耗
+        assert_eq!(*b, 123);
     }
-
-
 }
