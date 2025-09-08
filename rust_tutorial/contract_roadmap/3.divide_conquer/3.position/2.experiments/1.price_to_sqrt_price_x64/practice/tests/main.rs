@@ -13,8 +13,8 @@ fn test_price_to_sqrt_price_x64() {
     let decimals_0 = 9;
     let decimals_1 = 6;
 
-    // let sqrt_price_x64 = price_to_sqrt_price_x64(price, decimals_0, decimals_1);
-    // println!("111sqrt_price_x64: {}", sqrt_price_x64);
+    let sqrt_price_x64 = price_to_sqrt_price_x64(price, decimals_0, decimals_1);
+    println!("111sqrt_price_x64: {}", sqrt_price_x64);
 
     // state.sqrt_price_x64:583330181263634387 0.8466825204893473
     // step.sqrt_price_next_x64:521037230575395660 0.7978074153597088
