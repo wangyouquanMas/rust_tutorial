@@ -18,7 +18,7 @@ fn fetch_logs_for_signature() {
     let client = RpcClient::new(rpc_url);
 
     // Read signature from env; skip test if not provided
-    let sig_str = "4CjhHZdTepBFUz3soxk8nAwbZo8gwT4R5Gum84jDQYFz3LMYs76fMNeuJpiyfTgFbT8ykt233m8B6Cwnpo1BFSWV";
+    let sig_str = "2MmgtnggZgPKcTMZvMJcRpnEPrQfRugF5wMK6qSf1mCPCRX43T21PCiRiXS126Gz6zrjFwjQ5Kd3uJtnvNrLbq7F";
 
     let signature = Signature::from_str(sig_str).expect("invalid signature");
 

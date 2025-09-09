@@ -202,17 +202,32 @@ cargo build --release
 ```bash
 ./target/release/client new-mint --decimals 6
 ```
+spl-token create-token
+
 > 创建精度为 6 位小数的代币铸造账户
+
+如果使用命令行输出当前创建的spl token ? 
+spl-token accounts
+
+
+如何使用命令行输出当前的token account ?
+
+1. 如何将sol 转为 wsol 
+ ./target/release/client wrap-sol 5000000000
+
 
 #### 创建代币账户
 ```bash
 ./target/release/client new-token <MINT_A_ADDRESS> <YOUR_WALLET>
 ```
+spl-token create-account token_mint_address
 
 #### 铸造代币
 ```bash
 ./target/release/client mint-to <MINT_A_ADDRESS> <TOKEN_ACCOUNT_A> 1000000000000
 ```
+spl-token mint 99zqUzQGohamfYxyo8ykTEbi91iom3CLmwCA75FK5zTg 100 Hmyk3FSw4cfsuAes7sanp2oxSkE9ivaH6pMzDzbacqmt
+
 > **注意**: 代币铸造单位转换: `1 SPL 代币 = 10^6 单位`  
 > 浏览器显示使用 SPL 代币作为基本单位
 
