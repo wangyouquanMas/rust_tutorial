@@ -11,6 +11,103 @@ sqrt(p(i)) = sqrt(1.0001)^i  [代码中]
 
 => i = log base(sqrt(1.0001))(sqrt(p)) 【TODO: 核心公式】
 
+
+
+Perfect 👍 Let me write this out as if you’re giving a clear lecture explanation in English. I’ll go step by step and explain both the math and the reasoning.
+
+---
+
+### Explanation in English
+
+We begin with the definition of the price at tick index $i$:
+
+$$
+P(i) = 1.0001^i
+$$
+
+---
+
+**Step 1: Take the square root of both sides.**
+Since we want to work with the square root price, we take the square root of $P(i)$:
+
+$$
+\sqrt{P_i} = \sqrt{1.0001^i}
+$$
+
+---
+
+**Step 2: Apply the rule of exponents.**
+The square root is equivalent to raising the expression to the power of one-half. Therefore:
+
+$$
+\sqrt{1.0001^i} = 1.0001^{i/2}
+$$
+
+---
+
+**Step 3: Rearrange the exponent.**
+We can rewrite $1.0001^{i/2}$ as:
+
+$$
+1.0001^{i/2} = \left(1.0001^{1/2}\right)^i
+$$
+
+And since $1.0001^{1/2}$ is simply the square root of $1.0001$, we obtain:
+
+$$
+\left(1.0001^{1/2}\right)^i = \left(\sqrt{1.0001}\right)^i
+$$
+
+Thus,
+
+$$
+\sqrt{P_i} = \left(\sqrt{1.0001}\right)^i
+$$
+
+---
+
+**Step 4: Take the logarithm to solve for $i$.**
+By taking logarithms with base $\sqrt{1.0001}$, we can isolate $i$:
+
+$$
+\log_{\sqrt{1.0001}} \left(\sqrt{P_i}\right) = i
+$$
+
+---
+
+**Step 5: Express in terms of natural logarithms.**
+Using the change-of-base rule, this is equivalent to:
+
+$$
+i = \frac{\log \left(\sqrt{P_i}\right)}{\log \left(\sqrt{1.0001}\right)}
+$$
+
+---
+
+### Final Result
+
+Therefore, the tick index $i$ can be expressed as:
+
+$$
+i = \frac{\log \left(\sqrt{P_i}\right)}{\log \left(\sqrt{1.0001}\right)}
+$$
+
+---
+
+✨ In words:
+
+* We start with the definition $P(i) = 1.0001^i$.
+* Taking the square root gives us $\sqrt{P_i} = (\sqrt{1.0001})^i$.
+* Then, by applying logarithms with base $\sqrt{1.0001}$, we find the tick index:
+
+$$
+i = \frac{\log \sqrt{P_i}}{\log \sqrt{1.0001}}
+$$
+
+
+
+
+
 tick = log_1.0001(price)
 
 get_tick_at_sqrt_price function, this is the inverse function of get_sqrt_price_at_tick
