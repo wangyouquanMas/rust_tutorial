@@ -18,7 +18,7 @@ fn test_price_to_sqrt_price_x64() {
 
     // state.sqrt_price_x64:583330181263634387 0.8466825204893473
     // step.sqrt_price_next_x64:521037230575395660 0.7978074153597088
-    let sqrt_price_x64 = 521339167259952073;  // 0.7978074153597088
+    let sqrt_price_x64 = 22592555198148960256;  // 0.7978074153597088
     let price_from_x64 = sqrt_price_x64_to_price(sqrt_price_x64, decimals_0, decimals_1);
     println!("price_from_x64: {}", price_from_x64);
 
