@@ -70,7 +70,7 @@ fn print_pool_state() {
     // Set POOL_ID and RPC_URL via env for flexibility
     // let pool_id = std::env::var("POOL_ID").expect("POOL_ID not set");
     let rpc_url = std::env::var("RPC_URL").unwrap_or_else(|_| "http://127.0.0.1:8899".to_string());
-    let pool_id = Pubkey::from_str("4xtXs8tUtGZmaBPzoVnfFDGVVBTUaSgV5CanLpSDDgJT").expect("bad POOL_ID");
+    let pool_id = Pubkey::from_str("377nrfUsynL47NknLp7692h5z4VjvpiodyZkmBCyPe5W").expect("bad POOL_ID");
 
     // let pool_id = Pubkey::from_str(&pool_id).expect("bad POOL_ID");
 
@@ -114,6 +114,7 @@ fn print_pool_state() {
     let fund_fees_token_1 = raw.fund_fees_token_1;
     let open_time = raw.open_time;
     let recent_epoch = raw.recent_epoch;
+    let tick_array_bitmap = raw.tick_array_bitmap;
 
     println!("pool_id: {}", pool_id);
     println!("amm_config: {}", amm_config);
@@ -142,6 +143,8 @@ fn print_pool_state() {
     println!("fund_fees_token_1: {}", fund_fees_token_1);
     println!("open_time: {}", open_time);
     println!("recent_epoch: {}", recent_epoch);
+
+    println!("tick_array_bitmap: {:?}", tick_array_bitmap);
 
     for (i, r) in raw.reward_infos.iter().enumerate() {
         let token_mint = Pubkey::new_from_array(r.token_mint);
