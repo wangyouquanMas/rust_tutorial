@@ -1,0 +1,21 @@
+目标：
+1. 掌握在一个 price range中，left和right border对应的边界 tick中的流动性是什么？
+
+内容：
+1. 边界
+
+实验：
+首次添加流动性： ./target/release/client open-position 0.8 1.2 --is-base-0 100
+
+    //ticklower: 
+    // tick[22]: tick=-2280, liquidity_gross=0.0000000006298762114101061 (raw: 11619165270), 
+    // liquidity_net=0.0000000006298762114101061 (raw: 11619165270)
+
+    //tickupper:
+    //tick[30]: tick=1800, liquidity_gross=0.0000000006298762114101061 (raw: 11619165270), 
+    // liquidity_net=-0.0000000006298762114101061 (raw: -11619165270)
+
+问题：
+1） 为什么tick=-2280 liquidity_net 是正的；  tick=1800 liquidity_net 是负的
+
+TODO: 找到代码位置
