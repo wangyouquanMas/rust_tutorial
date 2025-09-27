@@ -2,7 +2,10 @@ use anchor_lang::prelude::*;
 
 use crate::errors::ErrorCode;
 use crate::events::AmmConfigInitializedEvent;
-use crate::state::{AmmConfig, AMM_CONFIG_SEED, FEE_RATE_DENOMINATOR, MAX_FUND_FEE_RATE, MAX_PROTOCOL_FEE_RATE, MAX_TRADE_FEE_RATE};
+use crate::state::{
+    AmmConfig, AMM_CONFIG_SEED, FEE_RATE_DENOMINATOR, MAX_FUND_FEE_RATE, MAX_PROTOCOL_FEE_RATE,
+    MAX_TRADE_FEE_RATE,
+};
 
 /// Accounts required to initialize a new global AMM configuration.
 #[derive(Accounts)]
@@ -37,7 +40,7 @@ pub fn initialize_amm_config(
     protocol_fee_rate: u32,
     fund_fee_rate: u32,
 ) -> Result<()> {
-    let bump = *ctx.bumps.get("amm_config").unwrap_or(&0);
+    let bump = ctx.bumps.amm_config;
     initialize_config_account(
         &mut ctx.accounts.amm_config,
         bump,
@@ -88,15 +91,15 @@ fn validate_fee_inputs(
     fund_fee_rate: u32,
 ) -> Result<()> {
     require!(tick_spacing > 0, ErrorCode::InvalidFeeTier);
-    require!(trade_fee_rate <= MAX_TRADE_FEE_RATE, ErrorCode::InvalidTradeFeeRate);
-    require!(protocol_fee_rate <= MAX_PROTOCOL_FEE_RATE, ErrorCode::InvalidProtocolFeeRate);
-    require!(fund_fee_rate <= MAX_FUND_FEE_RATE, ErrorCode::InvalidFundFeeRate);
-
     let total_fee_rate = trade_fee_rate
         .checked_add(protocol_fee_rate)
         .and_then(|val| val.checked_add(fund_fee_rate))
         .ok_or(ErrorCode::TotalFeeRateTooHigh)?;
     require!(total_fee_rate <= FEE_RATE_DENOMINATOR, ErrorCode::TotalFeeRateTooHigh);
+
+    require!(trade_fee_rate <= MAX_TRADE_FEE_RATE, ErrorCode::InvalidTradeFeeRate);
+    require!(protocol_fee_rate <= MAX_PROTOCOL_FEE_RATE, ErrorCode::InvalidProtocolFeeRate);
+    require!(fund_fee_rate <= MAX_FUND_FEE_RATE, ErrorCode::InvalidFundFeeRate);
 
     Ok(())
 }
