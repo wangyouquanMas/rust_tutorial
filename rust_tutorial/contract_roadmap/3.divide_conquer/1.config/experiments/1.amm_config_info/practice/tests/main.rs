@@ -25,7 +25,7 @@ fn print_amm_config() {
     let rpc_url = std::env::var("RPC_URL").unwrap_or_else(|_| "http://127.0.0.1:8899".to_string());
     
     // Example AMM config address - replace with actual address for testing
-    let amm_config_id = Pubkey::from_str("AENbU71VcXS6eCaegq4zGJtJCE7xyRLoiE7A3kvibF89")
+    let amm_config_id = Pubkey::from_str("3LyCjZDwFYcFoGBUwsAmAaV7c4qWYJMW5FRdLLb3Dtq6")
         .expect("Invalid AMM config address");
     
     let client = RpcClient::new(rpc_url);

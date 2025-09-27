@@ -8,7 +8,7 @@ pub mod utils;
 use instructions::*;
 pub use instructions::initialize_amm_config::InitializeAmmConfig;
 
-declare_id!("HXdTUsTLztg64qJ8upPqHMnBAmeLA8Zmj1xUhDPqj4fn");
+declare_id!("3LyCjZDwFYcFoGBUwsAmAaV7c4qWYJMW5FRdLLb3Dtq6");
 
 #[program]
 pub mod fun_uniswap_v3 {

@@ -40,6 +40,14 @@ describe("fun-uniswap-v3", () => {
 
     const ammConfigAccount = await program.account.ammConfig.fetch(ammConfigPda);
 
+    //output logs 
+    console.log("ammConfigAccount.bump", ammConfigAccount.bump);
+    console.log("ammConfigAccount.authority", ammConfigAccount.authority.toBase58());
+    console.log("ammConfigAccount.tickSpacing", ammConfigAccount.tickSpacing);
+    console.log("ammConfigAccount.tradeFeeRate", ammConfigAccount.tradeFeeRate);
+    console.log("ammConfigAccount.protocolFeeRate", ammConfigAccount.protocolFeeRate);
+    console.log("ammConfigAccount.fundFeeRate", ammConfigAccount.fundFeeRate);
+
     expect(ammConfigAccount.bump).to.be.a("number");
     expect(ammConfigAccount.authority.toBase58()).to.equal(authority.publicKey.toBase58());
     expect(ammConfigAccount.tickSpacing).to.equal(tickSpacing);
