@@ -1,11 +1,14 @@
 pub mod amm_config;
 pub mod pool_state;
-// TODO: add observation and tick-array bitmap state definitions.
+pub mod observation;
+pub mod tick_array_bitmap;
 
 use anchor_lang::prelude::Pubkey;
 
 pub use amm_config::*;
 pub use pool_state::*;
+pub use observation::*;
+pub use tick_array_bitmap::*;
 
 /// Convenience helper exposing the account space required for a pool.
 pub const fn pool_state_space() -> usize {

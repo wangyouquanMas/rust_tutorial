@@ -1,8 +1,9 @@
 use crate::errors::ErrorCode;
 use crate::events::PoolCreatedEvent;
-use crate::state::{self, AmmConfig, PoolState};
+use crate::state::{self, AmmConfig, ObservationAccount, PoolState, TickArrayBitmapAccount};
+use crate::utils::create_token_vault_account;
 use crate::utils::validation;
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program::clock::Clock};
 use anchor_spl::token_interface::{InterfaceAccount, Mint, TokenInterface};
 
 /// Accounts required to create and initialize a new pool.
@@ -57,21 +58,21 @@ pub struct CreatePool<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8,
+        space = ObservationAccount::space(),
         seeds = observation_seeds(&pool_state.key()),
         bump,
     )]
-    pub observation_state: UncheckedAccount<'info>,
+    pub observation_state: Account<'info, ObservationAccount>,
 
     /// PDA storing tick-array initialization bitmap.
     #[account(
         init,
         payer = payer,
-        space = 8,
+        space = TickArrayBitmapAccount::space(),
         seeds = tick_array_bitmap_seeds(&pool_state.key()),
         bump,
     )]
-    pub tick_array_bitmap: UncheckedAccount<'info>,
+    pub tick_array_bitmap: Account<'info, TickArrayBitmapAccount>,
 
     /// Token program for mint_0 (supports SPL Token or Token-2022).
     pub token_program_0: Interface<'info, TokenInterface>,
@@ -79,6 +80,7 @@ pub struct CreatePool<'info> {
     pub token_program_1: Interface<'info, TokenInterface>,
     /// System program for account creation.
     pub system_program: Program<'info, System>,
+
     /// Rent sysvar required for account initialization.
     pub rent: Sysvar<'info, Rent>,
 }
@@ -98,6 +100,26 @@ pub fn create_pool(
         .bumps
         .get("pool_state")
         .ok_or(ErrorCode::MissingBump)?;
+
+    create_token_vault_account(
+        &accounts.payer,
+        &accounts.pool_state.to_account_info(),
+        &accounts.token_vault_0.to_account_info(),
+        &accounts.token_mint_0,
+        &accounts.system_program,
+        &accounts.token_program_0,
+        &[&pool_vault_seeds(&accounts.pool_state.key(), &accounts.token_mint_0.key())],
+    )?;
+
+    create_token_vault_account(
+        &accounts.payer,
+        &accounts.pool_state.to_account_info(),
+        &accounts.token_vault_1.to_account_info(),
+        &accounts.token_mint_1,
+        &accounts.system_program,
+        &accounts.token_program_1,
+        &[&pool_vault_seeds(&accounts.pool_state.key(), &accounts.token_mint_1.key())],
+    )?;
 
     let pool_state = &mut accounts.pool_state;
     pool_state.bump = pool_bump;
@@ -127,6 +149,18 @@ pub fn create_pool(
     pool_state.reserved = [0; 32];
 
     validation::validate_tick_spacing(&accounts.amm_config, pool_state.tick_spacing)?;
+
+    let observation_bump = ctx
+        .bumps
+        .get("observation_state")
+        .copied()
+        .ok_or(ErrorCode::MissingBump)?;
+    let clock = Clock::get()?;
+    accounts
+        .observation_state
+        .initialize(observation_bump, pool_state.key(), clock.epoch);
+
+    accounts.tick_array_bitmap.initialize(pool_state.key());
 
     emit!(PoolCreatedEvent {
         authority: accounts.authority.key(),
