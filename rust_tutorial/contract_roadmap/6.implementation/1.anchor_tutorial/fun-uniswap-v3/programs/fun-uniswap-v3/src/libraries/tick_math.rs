@@ -1,5 +1,6 @@
 use crate::errors::ErrorCode;
-use crate::libraries::big_num::U128;
+
+use super::big_num::U128;
 
 use anchor_lang::require;
 

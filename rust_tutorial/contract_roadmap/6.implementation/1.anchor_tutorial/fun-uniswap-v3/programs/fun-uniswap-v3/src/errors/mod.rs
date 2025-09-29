@@ -30,5 +30,19 @@ pub enum ErrorCode {
     MissingBump,
     #[msg("Derived vault PDA bump does not match expected value")]
     VaultBumpMismatch,
+    #[msg("Provided tick index is invalid for the current configuration")]
+    InvalidTickIndex,
+    #[msg("Tick array boundary does not extend beyond base bitmap range")]
+    InvalidTickArrayBoundary,
+    #[msg("Requested tick array does not belong to this pool")]
+    InvalidTickArray,
+    #[msg("Tick index does not align with the configured tick spacing")]
+    TickAndSpacingNotMatch,
+    #[msg("Tick index exceeds the maximum supported range")]
+    TickUpperOverflow,
+    #[msg("Sqrt price x64 value outside supported range")]
+    SqrtPriceX64,
+    #[msg("Liquidity adjustment results in an underflow")]
+    LiquidityUnderflow,
 }
 

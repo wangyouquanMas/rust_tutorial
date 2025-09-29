@@ -10,7 +10,7 @@ pub const TICK_ARRAY_SIZE: i32 = 60;
 
 #[account(zero_copy(unsafe))]
 #[repr(C, packed)]
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct TickArrayState {
     pub pool_id: Pubkey,
     pub start_tick_index: i32,
@@ -20,8 +20,29 @@ pub struct TickArrayState {
     pub padding: [u8; 107],
 }
 
+impl Default for TickArrayState {
+    fn default() -> Self {
+        Self {
+            pool_id: Pubkey::default(),
+            start_tick_index: 0,
+            ticks: [TickState::default(); TICK_ARRAY_SIZE_USIZE],
+            initialized_tick_count: 0,
+            recent_epoch: 0,
+            padding: [0; 107],
+        }
+    }
+}
+
 impl TickArrayState {
     pub const LEN: usize = 8 + 32 + 4 + TickState::LEN * TICK_ARRAY_SIZE_USIZE + 1 + 115;
+
+    pub fn ticks_per_array(tick_spacing: u16) -> i32 {
+        TICK_ARRAY_SIZE * tick_spacing as i32
+    }
+
+    pub fn check_is_out_of_boundary(tick: i32) -> bool {
+        TickState::check_is_out_of_boundary(tick)
+    }
 
     pub fn initialize(
         &mut self,
@@ -37,6 +58,33 @@ impl TickArrayState {
         self.pool_id = pool_key;
         self.recent_epoch = get_recent_epoch()?;
         Ok(())
+    }
+
+    pub fn mark_tick(&mut self, tick_index: i32, tick_spacing: u16, initialized: bool) -> Result<()> {
+        let tick_state = self.get_tick_state_mut(tick_index, tick_spacing)?;
+        let was_initialized = tick_state.is_initialized();
+        if initialized {
+            tick_state.initialize(tick_index, tick_spacing)?;
+            tick_state.set_initialized();
+        } else {
+            tick_state.clear();
+        }
+
+        match (was_initialized, initialized) {
+            (false, true) => self.update_initialized_tick_count(true)?,
+            (true, false) => self.update_initialized_tick_count(false)?,
+            _ => {}
+        }
+
+        Ok(())
+    }
+
+    pub fn is_tick_initialized(&self, tick_index: i32, tick_spacing: u16) -> Result<bool> {
+        if !Self::belongs_to_array(tick_index, self.start_tick_index, tick_spacing) {
+            return Ok(false);
+        }
+        let offset = self.get_tick_offset_in_array(tick_index, tick_spacing)?;
+        Ok(self.ticks[offset].is_initialized())
     }
 
     pub fn update_initialized_tick_count(&mut self, add: bool) -> Result<()> {
@@ -63,18 +111,6 @@ impl TickArrayState {
         Ok(&mut self.ticks[offset_in_array])
     }
 
-    pub fn update_tick_state(
-        &mut self,
-        tick_index: i32,
-        tick_spacing: u16,
-        tick_state: TickState,
-    ) -> Result<()> {
-        let offset_in_array = self.get_tick_offset_in_array(tick_index, tick_spacing)?;
-        self.ticks[offset_in_array] = tick_state;
-        self.recent_epoch = get_recent_epoch()?;
-        Ok(())
-    }
-
     fn get_tick_offset_in_array(&self, tick_index: i32, tick_spacing: u16) -> Result<usize> {
         let start_tick_index = Self::get_array_start_index(tick_index, tick_spacing);
         require_eq!(start_tick_index, self.start_tick_index, ErrorCode::InvalidTickArray);
@@ -84,12 +120,16 @@ impl TickArrayState {
     }
 
     pub fn get_array_start_index(tick_index: i32, tick_spacing: u16) -> i32 {
-        let ticks_in_array = Self::tick_count(tick_spacing);
+        let ticks_in_array = Self::ticks_per_array(tick_spacing);
         let mut start = tick_index / ticks_in_array;
         if tick_index < 0 && tick_index % ticks_in_array != 0 {
             start -= 1;
         }
         start * ticks_in_array
+    }
+
+    pub fn belongs_to_array(tick_index: i32, start_index: i32, tick_spacing: u16) -> bool {
+        Self::get_array_start_index(tick_index, tick_spacing) == start_index
     }
 
     pub fn check_is_valid_start_index(tick_index: i32, tick_spacing: u16) -> bool {
@@ -100,17 +140,17 @@ impl TickArrayState {
             let min_start_index = Self::get_array_start_index(tick_math::MIN_TICK, tick_spacing);
             return tick_index == min_start_index;
         }
-        tick_index % Self::tick_count(tick_spacing) == 0
+        tick_index % Self::ticks_per_array(tick_spacing) == 0
     }
 
     pub fn tick_count(tick_spacing: u16) -> i32 {
-        TICK_ARRAY_SIZE * i32::from(tick_spacing)
+        Self::ticks_per_array(tick_spacing)
     }
 }
 
 #[zero_copy(unsafe)]
 #[repr(C, packed)]
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct TickState {
     pub tick: i32,
     pub liquidity_net: i128,
@@ -120,6 +160,19 @@ pub struct TickState {
     pub padding: [u64; 8],
 }
 
+impl Default for TickState {
+    fn default() -> Self {
+        Self {
+            tick: 0,
+            liquidity_net: 0,
+            liquidity_gross: 0,
+            fee_growth_outside_0_x64: 0,
+            fee_growth_outside_1_x64: 0,
+            padding: [0; 8],
+        }
+    }
+}
+
 impl TickState {
     pub const LEN: usize = 4 + 16 + 16 + 16 + 16 + 8 * 8;
 
@@ -127,6 +180,12 @@ impl TickState {
         require!(tick % i32::from(tick_spacing) == 0, ErrorCode::TickAndSpacingNotMatch);
         self.tick = tick;
         Ok(())
+    }
+
+    pub fn set_initialized(&mut self) {
+        if self.liquidity_gross == 0 {
+            self.liquidity_gross = 1;
+        }
     }
 
     pub fn update(&mut self, liquidity_delta: i128, upper: bool) -> Result<bool> {
@@ -139,9 +198,9 @@ impl TickState {
         let flipped = (liquidity_gross_after == 0) != (liquidity_gross_before == 0);
         self.liquidity_gross = liquidity_gross_after;
         if upper {
-            self.liquidity_net = self.liquidity_net.checked_sub(liquidity_delta).unwrap();
+            self.liquidity_net = self.liquidity_net.checked_sub(liquidity_delta).unwrap_or_default();
         } else {
-            self.liquidity_net = self.liquidity_net.checked_add(liquidity_delta).unwrap();
+            self.liquidity_net = self.liquidity_net.checked_add(liquidity_delta).unwrap_or_default();
         }
         Ok(flipped)
     }

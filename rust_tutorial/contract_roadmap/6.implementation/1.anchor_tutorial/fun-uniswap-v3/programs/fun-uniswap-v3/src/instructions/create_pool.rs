@@ -2,16 +2,22 @@ use crate::errors::ErrorCode;
 use crate::events::PoolCreatedEvent;
 use crate::libraries::tick_math;
 use crate::state::{
-    self,
     AmmConfig,
-    ObservationAccount,
+    ObservationState,
     PoolState,
     TickArrayBitmapAccount,
     TickArrayBitmapExtensionAccount,
+    POOL_OBSERVATION_SEED,
+    POOL_STATE_SEED,
+    POOL_VAULT_SEED,
+    TICK_ARRAY_BITMAP_EXTENSION_SEED,
+    TICK_ARRAY_BITMAP_SEED,
 };
 use crate::utils::{create_token_vault_account, validation};
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{InterfaceAccount, Mint, TokenInterface};
+use anchor_spl::token_interface::{Mint, TokenInterface};
+
+use anchor_lang::prelude::InterfaceAccount;
 
 /// Accounts required to create and initialize a new pool.
 #[derive(Accounts)]
@@ -32,7 +38,12 @@ pub struct CreatePool<'info> {
         init,
         payer = payer,
         space = PoolState::space(),
-        seeds = pool_state_seeds(&amm_config.key(), &token_mint_0.key(), &token_mint_1.key()),
+        seeds = [
+            POOL_STATE_SEED.as_bytes(),
+            amm_config.key().as_ref(),
+            token_mint_0.key().as_ref(),
+            token_mint_1.key().as_ref(),
+        ],
         bump,
     )]
     pub pool_state: Account<'info, PoolState>,
@@ -48,7 +59,11 @@ pub struct CreatePool<'info> {
     /// PDA token account controlled by `pool_state` for mint 0.
     #[account(
         mut,
-        seeds = pool_vault_seeds(&pool_state.key(), &token_mint_0.key()),
+        seeds = [
+            POOL_VAULT_SEED.as_bytes(),
+            pool_state.key().as_ref(),
+            token_mint_0.key().as_ref(),
+        ],
         bump,
     )]
     pub token_vault_0: UncheckedAccount<'info>,
@@ -56,7 +71,11 @@ pub struct CreatePool<'info> {
     /// PDA token account controlled by `pool_state` for mint 1.
     #[account(
         mut,
-        seeds = pool_vault_seeds(&pool_state.key(), &token_mint_1.key()),
+        seeds = [
+            POOL_VAULT_SEED.as_bytes(),
+            pool_state.key().as_ref(),
+            token_mint_1.key().as_ref(),
+        ],
         bump,
     )]
     pub token_vault_1: UncheckedAccount<'info>,
@@ -65,18 +84,24 @@ pub struct CreatePool<'info> {
     #[account(
         init,
         payer = payer,
-        space = ObservationAccount::space(),
-        seeds = observation_seeds(&pool_state.key()),
+        space = ObservationState::LEN,
+        seeds = [
+            POOL_OBSERVATION_SEED.as_bytes(),
+            pool_state.key().as_ref(),
+        ],
         bump,
     )]
-    pub observation_state: Account<'info, ObservationAccount>,
+    pub observation_state: AccountLoader<'info, ObservationState>,
 
     /// PDA storing tick-array initialization bitmap.
     #[account(
         init,
         payer = payer,
         space = TickArrayBitmapAccount::space(),
-        seeds = tick_array_bitmap_seeds(&pool_state.key()),
+        seeds = [
+            TICK_ARRAY_BITMAP_SEED.as_bytes(),
+            pool_state.key().as_ref(),
+        ],
         bump,
     )]
     pub tick_array_bitmap: Account<'info, TickArrayBitmapAccount>,
@@ -85,7 +110,10 @@ pub struct CreatePool<'info> {
         init,
         payer = payer,
         space = TickArrayBitmapExtensionAccount::space(),
-        seeds = tick_array_bitmap_extension_seeds(&pool_state.key()),
+        seeds = [
+            TICK_ARRAY_BITMAP_EXTENSION_SEED.as_bytes(),
+            pool_state.key().as_ref(),
+        ],
         bump,
     )]
     pub tick_array_bitmap_extension: Account<'info, TickArrayBitmapExtensionAccount>,
@@ -112,17 +140,11 @@ pub fn create_pool(
     validation::validate_mint_order(&accounts.token_mint_0.key(), &accounts.token_mint_1.key())?;
     validation::validate_mint_decimals(&accounts.token_mint_0, &accounts.token_mint_1)?;
 
-    let pool_bump = *ctx
-        .bumps
-        .get("pool_state")
-        .ok_or(ErrorCode::MissingBump)?;
+    let pool_bump = ctx.bumps.pool_state;
 
     let initial_tick = tick_math::get_tick_at_sqrt_price(sqrt_price_x64)?;
 
-    let vault_0_bump = *ctx
-        .bumps
-        .get("token_vault_0")
-        .ok_or(ErrorCode::MissingBump)?;
+    let vault_0_bump = ctx.bumps.token_vault_0;
     create_token_vault_account(
         &accounts.payer,
         &accounts.pool_state.to_account_info(),
@@ -138,10 +160,7 @@ pub fn create_pool(
         ],
     )?;
 
-    let vault_1_bump = *ctx
-        .bumps
-        .get("token_vault_1")
-        .ok_or(ErrorCode::MissingBump)?;
+    let vault_1_bump = ctx.bumps.token_vault_1;
     create_token_vault_account(
         &accounts.payer,
         &accounts.pool_state.to_account_info(),
@@ -187,18 +206,17 @@ pub fn create_pool(
 
     validation::validate_tick_spacing(&accounts.amm_config, pool_state.tick_spacing)?;
 
-    accounts.observation_state.initialize(pool_state.key())?;
+    accounts
+        .observation_state
+        .load_init()?
+        .initialize(pool_state.key())?;
 
     accounts.tick_array_bitmap.initialize(pool_state.key());
     accounts
         .tick_array_bitmap_extension
         .initialize(pool_state.key());
 
-    let _ = check_current_tick_array_is_initialized(
-        U1024([0; 16]),
-        tick_current,
-        accounts.amm_config.tick_spacing,
-    );
+    let _ = tick_current;
 
     emit!(PoolCreatedEvent {
         authority: accounts.authority.key(),
@@ -216,25 +234,5 @@ pub fn create_pool(
     });
 
     Ok(())
-}
-
-fn pool_state_seeds<'a>(
-    amm_config: &'a Pubkey,
-    token_mint_0: &'a Pubkey,
-    token_mint_1: &'a Pubkey,
-) -> [&'a [u8]; 4] {
-    crate::state::pool_state_seeds(amm_config, token_mint_0, token_mint_1)
-}
-
-fn pool_vault_seeds<'a>(pool_state: &'a Pubkey, token_mint: &'a Pubkey) -> [&'a [u8]; 3] {
-    crate::state::pool_vault_seeds(pool_state, token_mint)
-}
-
-fn observation_seeds<'a>(pool_state: &'a Pubkey) -> [&'a [u8]; 2] {
-    crate::state::observation_seeds(pool_state)
-}
-
-fn tick_array_bitmap_seeds<'a>(pool_state: &'a Pubkey) -> [&'a [u8]; 2] {
-    crate::state::tick_array_bitmap_seeds(pool_state)
 }
 

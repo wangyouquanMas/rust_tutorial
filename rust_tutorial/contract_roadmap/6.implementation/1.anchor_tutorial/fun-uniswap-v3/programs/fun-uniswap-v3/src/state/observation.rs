@@ -34,13 +34,14 @@ impl Default for ObservationState {
 impl ObservationState {
     pub const LEN: usize = 8 + 1 + 8 + 2 + 32 + Observation::LEN * OBSERVATION_CAPACITY + 8 * 4;
 
+    pub const fn space() -> usize {
+        Self::LEN
+    }
+
     pub fn initialize(&mut self, pool_id: Pubkey) -> Result<()> {
-        self.initialized = false;
+        *self = Self::default();
         self.recent_epoch = get_recent_epoch()?;
-        self.observation_index = 0;
         self.pool_id = pool_id;
-        self.observations = [Observation::default(); OBSERVATION_CAPACITY];
-        self.padding = [0u64; 4];
         Ok(())
     }
 

@@ -1,5 +1,10 @@
+#![allow(unexpected_cfgs)]
+
+pub use core as core_;
+
 use anchor_lang::prelude::*;
 pub mod state;
+pub mod libraries;
 pub mod instructions;
 pub mod errors;
 pub mod events;
