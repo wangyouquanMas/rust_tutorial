@@ -16,6 +16,8 @@ pub enum ErrorCode {
     AlreadyInitialized,
     #[msg("Token mints must be supplied in ascending address order")]
     InvalidMintOrder,
+    #[msg("Provided token mints do not align with expected configuration")]
+    TokenMintMismatch,
     #[msg("Token decimal mismatch between the provided mints")]
     MintDecimalsMismatch,
     #[msg("Tick spacing does not match configuration requirements")]
@@ -26,5 +28,7 @@ pub enum ErrorCode {
     InvalidAuthority,
     #[msg("Missing PDA bump for derived account")]
     MissingBump,
+    #[msg("Derived vault PDA bump does not match expected value")]
+    VaultBumpMismatch,
 }
 

@@ -1,4 +1,5 @@
 use crate::errors::ErrorCode;
+use crate::events::PoolCreatedEvent;
 use crate::state::{self, AmmConfig, PoolState};
 use crate::utils::validation;
 use anchor_lang::prelude::*;
@@ -125,7 +126,19 @@ pub fn create_pool(
     pool_state.padding0 = [0; 2];
     pool_state.reserved = [0; 32];
 
-    validation::validate_tick_spacing(&accounts.amm_config, pool_state)?;
+    validation::validate_tick_spacing(&accounts.amm_config, pool_state.tick_spacing)?;
+
+    emit!(PoolCreatedEvent {
+        authority: accounts.authority.key(),
+        amm_config: accounts.amm_config.key(),
+        pool_state: accounts.pool_state.key(),
+        token_mint_0: accounts.token_mint_0.key(),
+        token_mint_1: accounts.token_mint_1.key(),
+        token_vault_0: accounts.token_vault_0.key(),
+        token_vault_1: accounts.token_vault_1.key(),
+        sqrt_price_x64,
+        tick_current,
+    });
 
     Ok(())
 }
