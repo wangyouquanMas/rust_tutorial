@@ -30,6 +30,7 @@ pub struct PoolState {
     pub observation_state: Pubkey,
     /// Tick-array bitmap account tracking initialized tick arrays.
     pub tick_array_bitmap: Pubkey,
+    pub tick_array_bitmap_extension: Pubkey,
     /// Cached mint decimals for price & fee math.
     pub mint_decimals_0: u8,
     pub mint_decimals_1: u8,
@@ -63,7 +64,7 @@ impl PoolState {
     /// Discriminator (8 bytes) + serialized field lengths.
     pub const LEN: usize = 8 // discriminator
         + 1 // bump
-        + 32 * 8 // pubkeys
+        + 32 * 9 // pubkeys
         + 1 // mint_decimals_0
         + 1 // mint_decimals_1
         + 2 // tick_spacing

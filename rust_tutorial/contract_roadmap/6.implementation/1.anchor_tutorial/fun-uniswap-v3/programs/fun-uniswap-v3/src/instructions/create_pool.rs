@@ -1,8 +1,8 @@
 use crate::errors::ErrorCode;
 use crate::events::PoolCreatedEvent;
 use crate::state::{self, AmmConfig, ObservationAccount, PoolState, TickArrayBitmapAccount};
-use crate::utils::create_token_vault_account;
-use crate::utils::validation;
+use crate::utils::{create_token_vault_account, time::get_recent_epoch, validation};
+use crate::libraries::{tick_math, tick_array_bit_map::check_current_tick_array_is_initialized};
 use anchor_lang::{prelude::*, solana_program::clock::Clock};
 use anchor_spl::token_interface::{InterfaceAccount, Mint, TokenInterface};
 
@@ -101,6 +101,8 @@ pub fn create_pool(
         .get("pool_state")
         .ok_or(ErrorCode::MissingBump)?;
 
+    let initial_tick = tick_math::get_tick_at_sqrt_price(sqrt_price_x64)?;
+
     create_token_vault_account(
         &accounts.payer,
         &accounts.pool_state.to_account_info(),
@@ -161,6 +163,12 @@ pub fn create_pool(
         .initialize(observation_bump, pool_state.key(), clock.epoch);
 
     accounts.tick_array_bitmap.initialize(pool_state.key());
+
+    let _ = check_current_tick_array_is_initialized(
+        U1024([0; 16]),
+        tick_current,
+        accounts.amm_config.tick_spacing,
+    );
 
     emit!(PoolCreatedEvent {
         authority: accounts.authority.key(),

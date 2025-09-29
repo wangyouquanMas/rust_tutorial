@@ -19,6 +19,9 @@ pub struct PoolCreatedEvent {
     pub token_mint_1: Pubkey,
     pub token_vault_0: Pubkey,
     pub token_vault_1: Pubkey,
+    pub observation: Pubkey,
+    pub tick_array_bitmap: Pubkey,
+    pub tick_array_bitmap_extension: Pubkey,
     pub sqrt_price_x64: u128,
     pub tick_current: i32,
 }
