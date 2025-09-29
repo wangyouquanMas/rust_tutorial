@@ -6,6 +6,7 @@ pub mod events;
 pub mod utils;
 
 use instructions::*;
+pub use instructions::create_pool::CreatePool;
 pub use instructions::initialize_amm_config::InitializeAmmConfig;
 
 declare_id!("3LyCjZDwFYcFoGBUwsAmAaV7c4qWYJMW5FRdLLb3Dtq6");
@@ -35,6 +36,14 @@ pub mod fun_uniswap_v3 {
             protocol_fee_rate,
             fund_fee_rate,
         )
+    }
+
+    pub fn create_pool(
+        ctx: Context<CreatePool>,
+        sqrt_price_x64: u128,
+        tick_current: i32,
+    ) -> Result<()> {
+        instructions::create_pool::create_pool(ctx, sqrt_price_x64, tick_current)
     }
 }
 
