@@ -48,6 +48,13 @@ pub fn tick_array_bitmap_seeds<'a>(pool_state: &'a Pubkey) -> [&'a [u8]; 2] {
     ]
 }
 
+pub fn tick_array_bitmap_extension_seeds<'a>(pool_state: &'a Pubkey) -> [&'a [u8]; 2] {
+    [
+        TICK_ARRAY_BITMAP_EXTENSION_SEED.as_bytes(),
+        pool_state.as_ref(),
+    ]
+}
+
 /// Returns `true` when the provided tick spacing matches the config.
 pub fn tick_spacing_matches(config: &AmmConfig, tick_spacing: u16) -> bool {
     config.tick_spacing == tick_spacing

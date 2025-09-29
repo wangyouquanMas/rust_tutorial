@@ -19,3 +19,19 @@ step12: 执行 `anchor build` 与 `anchor test`，确保构建及测试通过；
 3：任务完成标准：【`PoolState` 账户与 `create_pool` 指令在 Rust/TS 测试中通过验证；事件与错误定义覆盖关键分支；相关文档同步更新；本地 `anchor build`、`anchor test` 均成功，且代码已推送远程仓库】
 
 
+### What’s Next?
+
+1. **Rust Tests (Step 9)**  
+   - Add `solana_program_test` coverage for `create_pool`: happy path, duplicate init, mint order mismatch, authority mismatch. Start with integration tests under `tests/` or `#[cfg(test)]` modules around the instruction.
+
+2. **Validation & Error Guardrails**  
+   - Enforce any remaining checks: open-time vs. clock, mint allowlists, duplicate pool prevention, vault bump sanity. Tie these into the error codes we added.
+
+3. **Instruction Wiring & Remaining Accounts**  
+   - Ensure future instructions (e.g., add liquidity, swap) receive the bitmap extension via remaining accounts. Confirm event payloads cover everything downstream consumers need.
+
+4. **Documentation & TS Tests**  
+   - Update docs/roadmaps to reflect the new flow. Extend or add TypeScript tests once Rust coverage is in place.
+
+We can start with the Rust tests if you’re ready; just let me know how you’d like to proceed.
+

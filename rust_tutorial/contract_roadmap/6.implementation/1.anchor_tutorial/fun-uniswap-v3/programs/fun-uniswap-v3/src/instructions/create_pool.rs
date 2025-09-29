@@ -1,9 +1,16 @@
 use crate::errors::ErrorCode;
 use crate::events::PoolCreatedEvent;
-use crate::state::{self, AmmConfig, ObservationAccount, PoolState, TickArrayBitmapAccount};
-use crate::utils::{create_token_vault_account, time::get_recent_epoch, validation};
-use crate::libraries::{tick_math, tick_array_bit_map::check_current_tick_array_is_initialized};
-use anchor_lang::{prelude::*, solana_program::clock::Clock};
+use crate::libraries::tick_math;
+use crate::state::{
+    self,
+    AmmConfig,
+    ObservationAccount,
+    PoolState,
+    TickArrayBitmapAccount,
+    TickArrayBitmapExtensionAccount,
+};
+use crate::utils::{create_token_vault_account, validation};
+use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{InterfaceAccount, Mint, TokenInterface};
 
 /// Accounts required to create and initialize a new pool.
@@ -74,6 +81,15 @@ pub struct CreatePool<'info> {
     )]
     pub tick_array_bitmap: Account<'info, TickArrayBitmapAccount>,
 
+    #[account(
+        init,
+        payer = payer,
+        space = TickArrayBitmapExtensionAccount::space(),
+        seeds = tick_array_bitmap_extension_seeds(&pool_state.key()),
+        bump,
+    )]
+    pub tick_array_bitmap_extension: Account<'info, TickArrayBitmapExtensionAccount>,
+
     /// Token program for mint_0 (supports SPL Token or Token-2022).
     pub token_program_0: Interface<'info, TokenInterface>,
     /// Token program for mint_1.
@@ -103,6 +119,10 @@ pub fn create_pool(
 
     let initial_tick = tick_math::get_tick_at_sqrt_price(sqrt_price_x64)?;
 
+    let vault_0_bump = *ctx
+        .bumps
+        .get("token_vault_0")
+        .ok_or(ErrorCode::MissingBump)?;
     create_token_vault_account(
         &accounts.payer,
         &accounts.pool_state.to_account_info(),
@@ -110,9 +130,18 @@ pub fn create_pool(
         &accounts.token_mint_0,
         &accounts.system_program,
         &accounts.token_program_0,
-        &[&pool_vault_seeds(&accounts.pool_state.key(), &accounts.token_mint_0.key())],
+        &[
+            POOL_VAULT_SEED.as_bytes(),
+            accounts.pool_state.key().as_ref(),
+            accounts.token_mint_0.key().as_ref(),
+            &[vault_0_bump],
+        ],
     )?;
 
+    let vault_1_bump = *ctx
+        .bumps
+        .get("token_vault_1")
+        .ok_or(ErrorCode::MissingBump)?;
     create_token_vault_account(
         &accounts.payer,
         &accounts.pool_state.to_account_info(),
@@ -120,7 +149,12 @@ pub fn create_pool(
         &accounts.token_mint_1,
         &accounts.system_program,
         &accounts.token_program_1,
-        &[&pool_vault_seeds(&accounts.pool_state.key(), &accounts.token_mint_1.key())],
+        &[
+            POOL_VAULT_SEED.as_bytes(),
+            accounts.pool_state.key().as_ref(),
+            accounts.token_mint_1.key().as_ref(),
+            &[vault_1_bump],
+        ],
     )?;
 
     let pool_state = &mut accounts.pool_state;
@@ -133,10 +167,11 @@ pub fn create_pool(
     pool_state.token_vault_1 = accounts.token_vault_1.key();
     pool_state.observation_state = accounts.observation_state.key();
     pool_state.tick_array_bitmap = accounts.tick_array_bitmap.key();
+    pool_state.tick_array_bitmap_extension = accounts.tick_array_bitmap_extension.key();
     pool_state.mint_decimals_0 = accounts.token_mint_0.decimals;
     pool_state.mint_decimals_1 = accounts.token_mint_1.decimals;
     pool_state.tick_spacing = accounts.amm_config.tick_spacing;
-    pool_state.tick_current = tick_current;
+    pool_state.tick_current = initial_tick;
     pool_state.liquidity = 0;
     pool_state.sqrt_price_x64 = sqrt_price_x64;
     pool_state.fee_growth_global_0_x64 = 0;
@@ -152,17 +187,12 @@ pub fn create_pool(
 
     validation::validate_tick_spacing(&accounts.amm_config, pool_state.tick_spacing)?;
 
-    let observation_bump = ctx
-        .bumps
-        .get("observation_state")
-        .copied()
-        .ok_or(ErrorCode::MissingBump)?;
-    let clock = Clock::get()?;
-    accounts
-        .observation_state
-        .initialize(observation_bump, pool_state.key(), clock.epoch);
+    accounts.observation_state.initialize(pool_state.key())?;
 
     accounts.tick_array_bitmap.initialize(pool_state.key());
+    accounts
+        .tick_array_bitmap_extension
+        .initialize(pool_state.key());
 
     let _ = check_current_tick_array_is_initialized(
         U1024([0; 16]),
@@ -178,8 +208,11 @@ pub fn create_pool(
         token_mint_1: accounts.token_mint_1.key(),
         token_vault_0: accounts.token_vault_0.key(),
         token_vault_1: accounts.token_vault_1.key(),
+        observation: accounts.observation_state.key(),
+        tick_array_bitmap: accounts.tick_array_bitmap.key(),
+        tick_array_bitmap_extension: accounts.tick_array_bitmap_extension.key(),
         sqrt_price_x64,
-        tick_current,
+        tick_current: initial_tick,
     });
 
     Ok(())
