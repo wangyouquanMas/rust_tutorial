@@ -2,6 +2,7 @@ pub mod amm_config;
 pub mod pool_state;
 pub mod observation;
 pub mod tick_array_bitmap;
+pub mod tick_array;
 
 use anchor_lang::prelude::Pubkey;
 
@@ -9,6 +10,7 @@ pub use amm_config::*;
 pub use pool_state::*;
 pub use observation::*;
 pub use tick_array_bitmap::*;
+pub use tick_array::*;
 
 /// Convenience helper exposing the account space required for a pool.
 pub const fn pool_state_space() -> usize {
