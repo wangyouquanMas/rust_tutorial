@@ -1,10 +1,8 @@
 use crate::errors::ErrorCode;
-use crate::state::{self, AmmConfig, PoolState, TickArrayBitmapAccount, ObservationAccount};
+use crate::state::{self, AmmConfig, PoolState};
+use crate::utils::validation;
 use anchor_lang::prelude::*;
-use anchor_spl::{
-    token::{self, Token},
-    token_interface::{Mint, TokenAccount, TokenInterface},
-};
+use anchor_spl::token_interface::{InterfaceAccount, Mint, TokenInterface};
 
 /// Accounts required to create and initialize a new pool.
 #[derive(Accounts)]
@@ -13,7 +11,11 @@ pub struct CreatePool<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
+    /// Authority that owns the configuration and must approve the pool.
+    pub authority: Signer<'info>,
+
     /// Global configuration that governs this pool.
+    #[account(has_one = authority)]
     pub amm_config: Account<'info, AmmConfig>,
 
     /// Deterministic PDA storing core pool state data.
@@ -54,29 +56,26 @@ pub struct CreatePool<'info> {
     #[account(
         init,
         payer = payer,
-        space = ObservationAccount::space(),
+        space = 8,
         seeds = observation_seeds(&pool_state.key()),
         bump,
     )]
-    pub observation_state: Account<'info, ObservationAccount>,
+    pub observation_state: UncheckedAccount<'info>,
 
     /// PDA storing tick-array initialization bitmap.
     #[account(
         init,
         payer = payer,
-        space = TickArrayBitmapAccount::space(),
+        space = 8,
         seeds = tick_array_bitmap_seeds(&pool_state.key()),
         bump,
     )]
-    pub tick_array_bitmap: Account<'info, TickArrayBitmapAccount>,
+    pub tick_array_bitmap: UncheckedAccount<'info>,
 
     /// Token program for mint_0 (supports SPL Token or Token-2022).
     pub token_program_0: Interface<'info, TokenInterface>,
     /// Token program for mint_1.
     pub token_program_1: Interface<'info, TokenInterface>,
-    /// SPL Token program interface for CPI convenience (used when both mints are SPL token).
-    pub token_program: Program<'info, Token>,
-
     /// System program for account creation.
     pub system_program: Program<'info, System>,
     /// Rent sysvar required for account initialization.
@@ -90,24 +89,19 @@ pub fn create_pool(
 ) -> Result<()> {
     let accounts = ctx.accounts;
 
-    require!(
-        accounts.token_mint_0.key() < accounts.token_mint_1.key(),
-        ErrorCode::InvalidMintOrder
-    );
-    require!(
-        state::tick_spacing_matches(&accounts.amm_config, accounts.amm_config.tick_spacing),
-        ErrorCode::TickSpacingMismatch
-    );
+    validation::validate_authority(&accounts.amm_config, &accounts.authority.key())?;
+    validation::validate_mint_order(&accounts.token_mint_0.key(), &accounts.token_mint_1.key())?;
+    validation::validate_mint_decimals(&accounts.token_mint_0, &accounts.token_mint_1)?;
 
     let pool_bump = *ctx
         .bumps
         .get("pool_state")
         .ok_or(ErrorCode::MissingBump)?;
 
-    let mut pool_state = accounts.pool_state.clone();
+    let pool_state = &mut accounts.pool_state;
     pool_state.bump = pool_bump;
     pool_state.amm_config = accounts.amm_config.key();
-    pool_state.authority = accounts.amm_config.authority;
+    pool_state.authority = accounts.authority.key();
     pool_state.token_mint_0 = accounts.token_mint_0.key();
     pool_state.token_mint_1 = accounts.token_mint_1.key();
     pool_state.token_vault_0 = accounts.token_vault_0.key();
@@ -131,39 +125,7 @@ pub fn create_pool(
     pool_state.padding0 = [0; 2];
     pool_state.reserved = [0; 32];
 
-    accounts.pool_state.set_inner(pool_state);
-
-    // initialize token vaults manually via CPI to support token-2022
-    let token_program_0_info = accounts.token_program_0.to_account_info();
-    let token_program_1_info = accounts.token_program_1.to_account_info();
-
-    token::initialize_account3(
-        CpiContext::new(
-            token_program_0_info.clone(),
-            token::InitializeAccount3 {
-                account: accounts.token_vault_0.to_account_info(),
-                mint: accounts.token_mint_0.to_account_info(),
-                authority: accounts.pool_state.to_account_info(),
-            },
-        ),
-    )?;
-
-    token::initialize_account3(
-        CpiContext::new(
-            token_program_1_info,
-            token::InitializeAccount3 {
-                account: accounts.token_vault_1.to_account_info(),
-                mint: accounts.token_mint_1.to_account_info(),
-                authority: accounts.pool_state.to_account_info(),
-            },
-        ),
-    )?;
-
-    // initialize observation & tick array bitmap state
-    accounts.observation_state.initialize(accounts.pool_state.key())?;
-    accounts
-        .tick_array_bitmap
-        .initialize(accounts.pool_state.key());
+    validation::validate_tick_spacing(&accounts.amm_config, pool_state)?;
 
     Ok(())
 }
