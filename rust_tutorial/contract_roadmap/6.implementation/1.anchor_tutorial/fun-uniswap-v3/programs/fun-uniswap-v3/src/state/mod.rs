@@ -1,5 +1,6 @@
 pub mod amm_config;
 pub mod pool_state;
+// TODO: add observation and tick-array bitmap state definitions.
 
 use anchor_lang::prelude::Pubkey;
 
