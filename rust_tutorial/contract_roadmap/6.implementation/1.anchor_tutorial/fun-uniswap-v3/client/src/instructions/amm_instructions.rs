@@ -12,6 +12,7 @@ use fun_uniswap_v3::states::{
 use fun_uniswap_v3::accounts;
 use fun_uniswap_v3::instruction;
 use fun_uniswap_v3::accounts::OpenPositionWithToken22Nft;
+use fun_uniswap_v3::accounts::SwapSingle;
 
 
 pub fn create_amm_config_instr(
@@ -252,6 +253,53 @@ pub fn open_position_with_token22_nft_instr(
             tick_array_upper_start_index,
             with_metadata,
             base_flag: None,
+        })
+        .instructions()?;
+    Ok(instructions)
+}
+
+
+pub fn swap_instr(
+    config: &ClientConfig,
+    amm_config: Pubkey,
+    pool_account_key: Pubkey,
+    input_vault: Pubkey,
+    output_vault: Pubkey,
+    observation_state: Pubkey,
+    user_input_token: Pubkey,
+    user_out_put_token: Pubkey,
+    tick_array: Pubkey,
+    remaining_accounts: Vec<AccountMeta>,
+    amount: u64,
+    other_amount_threshold: u64,
+    sqrt_price_limit_x64: Option<u128>,
+    is_base_input: bool,
+) -> Result<Vec<Instruction>> {
+    let payer = read_keypair_file(&config.payer_path)?;
+    let url = Cluster::Custom(config.http_url.clone(), config.ws_url.clone());
+    // Client.
+    let client = Client::new(url, Rc::new(payer));
+    let program = client.program(config.raydium_v3_program)?;
+    let instructions = program
+        .request()
+        .accounts(SwapSingle {
+            payer: program.payer(),
+            amm_config,
+            pool_state: pool_account_key,
+            input_token_account: user_input_token,
+            output_token_account: user_out_put_token,
+            input_vault,
+            output_vault,
+            tick_array,
+            observation_state,
+            token_program: spl_token::id(),
+        })
+        .accounts(remaining_accounts)
+        .args(fun_uniswap_v3::instruction::Swap {
+            amount,
+            other_amount_threshold,
+            sqrt_price_limit_x64: sqrt_price_limit_x64.unwrap_or(0u128),
+            is_base_input,
         })
         .instructions()?;
     Ok(instructions)

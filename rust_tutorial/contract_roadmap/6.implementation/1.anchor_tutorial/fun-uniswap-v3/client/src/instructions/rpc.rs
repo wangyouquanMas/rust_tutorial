@@ -2,6 +2,8 @@ use anyhow::{anyhow, Result};
 use solana_client::{
     rpc_client::RpcClient,
     rpc_config::RpcSendTransactionConfig,
+    rpc_request::RpcRequest,
+    rpc_response::{RpcResult, RpcSimulateTransactionResult},
 };
 
 use solana_sdk::{
@@ -21,4 +23,20 @@ pub fn send_txn(client: &RpcClient, txn: &Transaction, wait_confirm: bool) -> Re
             ..RpcSendTransactionConfig::default()
         },
     )?)
+}
+
+
+pub fn simulate_transaction(
+    client: &RpcClient,
+    transaction: &Transaction,
+    sig_verify: bool,
+    cfg: CommitmentConfig,
+) -> RpcResult<RpcSimulateTransactionResult> {
+    let serialized_encoded = bs58::encode(bincode::serialize(transaction).unwrap()).into_string();
+    client.send(
+        RpcRequest::SimulateTransaction,
+        serde_json::json!([serialized_encoded, {
+            "sigVerify": sig_verify, "commitment": cfg.commitment
+        }]),
+    )
 }
