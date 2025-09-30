@@ -5,6 +5,8 @@ pub mod tickarray_bitmap_extension;
 pub mod tick_array;
 pub mod support_mint_associated;
 pub mod operation_account;
+pub mod personal_position;
+pub mod protocol_position;
 
 pub use config::*;
 pub use pool::*;
@@ -13,3 +15,5 @@ pub use tickarray_bitmap_extension::*;
 pub use tick_array::*;
 pub use support_mint_associated::*;
 pub use operation_account::*;
+pub use personal_position::*;
+pub use protocol_position::*;
