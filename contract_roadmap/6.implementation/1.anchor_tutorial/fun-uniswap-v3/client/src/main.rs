@@ -455,7 +455,7 @@ fn main() -> Result<()> {
             println!("- Amount 0 with slippage: {}", amount_0_with_slippage);
             println!("- Amount 1 with slippage: {}", amount_1_with_slippage);
 
-            
+
               // calc with transfer_fee
               let transfer_fee = get_pool_mints_inverse_fee(
                 &rpc_client,
@@ -467,6 +467,17 @@ fn main() -> Result<()> {
             println!("\nTransfer fees:");
             println!("- Transfer fee 0: {}", transfer_fee.0.transfer_fee);
             println!("- Transfer fee 1: {}", transfer_fee.1.transfer_fee);
+
+            let amount_0_max = (amount_0_with_slippage as u64)
+            .checked_add(transfer_fee.0.transfer_fee)
+            .unwrap();
+            let amount_1_max = (amount_1_with_slippage as u64)
+                .checked_add(transfer_fee.1.transfer_fee)
+                .unwrap();
+            println!("\nMaximum amounts (including fees):");
+            println!("- Max amount 0: {}", amount_0_max);
+            println!("- Max amount 1: {}", amount_1_max);
+
 
               // load position
               let position_nft_infos = get_all_nft_and_position_by_owner(
