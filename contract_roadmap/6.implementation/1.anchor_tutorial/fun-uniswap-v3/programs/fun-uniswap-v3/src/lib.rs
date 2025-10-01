@@ -50,8 +50,35 @@ pub mod fun_uniswap_v3 {
     pub fn create_pool(
         ctx: Context<CreatePool>,
         sqrt_price_x64: u128,
+        open_time: u64,
     ) -> Result<()> {
-        instructions::create_pool::create_pool(ctx, sqrt_price_x64)
+        instructions::create_pool::create_pool(ctx, sqrt_price_x64, open_time)
+    }
+
+    pub fn open_position_with_token22_nft<'a, 'b, 'c: 'info, 'info>(
+        ctx: Context<'a, 'b, 'c, 'info, OpenPositionWithToken22Nft<'info>>,
+        tick_lower_index: i32,
+        tick_upper_index: i32,
+        tick_array_lower_start_index: i32,
+        tick_array_upper_start_index: i32,
+        liquidity: u128,
+        amount_0_max: u64,
+        amount_1_max: u64,
+        with_metadata: bool,
+        base_flag: Option<bool>,
+    ) -> Result<()> {
+        instructions::open_position_with_token22_nft(
+            ctx,
+            liquidity,
+            amount_0_max,
+            amount_1_max,
+            tick_lower_index,
+            tick_upper_index,
+            tick_array_lower_start_index,
+            tick_array_upper_start_index,
+            with_metadata,
+            base_flag,
+        )
     }
 }
 

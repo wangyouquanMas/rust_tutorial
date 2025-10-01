@@ -16,6 +16,7 @@ use solana_sdk::{
     system_program,
     transaction::Transaction,
     program_pack::Pack,
+    compute_budget::ComputeBudgetInstruction,
 };
 use configparser::ini::Ini;
 use std::rc::Rc;
@@ -340,26 +341,28 @@ fn main() -> Result<()> {
 
 
         let create_pool_instr = create_pool_instr(
-                &pool_config.clone(),
-                amm_config_key,
-                mint0,
-                mint1,
-                mint0_owner,
-                mint1_owner,
-                correct_bitmap, // Use the correctly calculated bitmap
-                sqrt_price_x64,
-         )?;
-            // send
-            let signers = vec![&payer];
-            let recent_hash = rpc_client.get_latest_blockhash()?;
-            let txn = Transaction::new_signed_with_payer(
-                &create_pool_instr,
-                Some(&payer.pubkey()),
-                &signers,
-                recent_hash,
-            );
-            let signature = send_txn(&rpc_client, &txn, true)?;
-            println!("{}", signature);
+            &pool_config.clone(),
+            amm_config_key,
+            mint0,
+            mint1,
+            mint0_owner,
+            mint1_owner,
+            correct_bitmap, // Use the correctly calculated bitmap
+            sqrt_price_x64,
+            open_time,
+        )?;
+
+        // send
+        let signers = vec![&payer];
+        let recent_hash = rpc_client.get_latest_blockhash()?;
+        let txn = Transaction::new_signed_with_payer(
+            &create_pool_instr,
+            Some(&payer.pubkey()),
+            &signers,
+            recent_hash,
+        );
+        let signature = send_txn(&rpc_client, &txn, true)?;
+        println!("{}", signature);
         }
 
         CommandsName::OpenPosition {
@@ -561,6 +564,52 @@ fn main() -> Result<()> {
             ));
             println!("- Tick array bitmap extension: {}", pool_config.tickarray_bitmap_extension.unwrap());
 
+            let mut instructions = Vec::new();
+            let request_inits_instr =
+                ComputeBudgetInstruction::set_compute_unit_limit(1400_000u32);
+            instructions.push(request_inits_instr);
+            let open_position_instr = open_position_with_token22_nft_instr(
+                &pool_config.clone(),
+                pool_config.pool_id_account.unwrap(),
+                pool.token_vault_0,
+                pool.token_vault_1,
+                pool.token_mint_0,
+                pool.token_mint_1,
+                nft_mint.pubkey(),
+                payer.pubkey(),
+                spl_associated_token_account::get_associated_token_address_with_program_id(
+                    &payer.pubkey(),
+                    &pool_config.mint0.unwrap(),
+                    &transfer_fee.0.owner,
+                ),
+                spl_associated_token_account::get_associated_token_address_with_program_id(
+                    &payer.pubkey(),
+                    &pool_config.mint1.unwrap(),
+                    &transfer_fee.1.owner,
+                ),
+                remaining_accounts,
+                liquidity,
+                amount_0_max,
+                amount_1_max,
+                tick_lower_index,
+                tick_upper_index,
+                tick_array_lower_start_index,
+                tick_array_upper_start_index,
+                with_metadata,
+            )?;
+            instructions.extend(open_position_instr);
+            println!("\nSending transaction...");
+            // send
+            let signers = vec![&payer, &nft_mint];
+            let recent_hash = rpc_client.get_latest_blockhash()?;
+            let txn = Transaction::new_signed_with_payer(
+                &instructions,
+                Some(&payer.pubkey()),
+                &signers,
+                recent_hash,
+            );
+            let signature = send_txn(&rpc_client, &txn, true)?;
+            println!("Transaction signature: {}", signature);
         } else {
             // personal position exist
             println!("\nPosition already exists:");
@@ -569,11 +618,7 @@ fn main() -> Result<()> {
             println!("- Lower tick: {}", find_position.tick_lower_index);
             println!("- Upper tick: {}", find_position.tick_upper_index);
         }
-
         }
-
-
-
     }
     Ok(())
 }
