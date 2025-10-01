@@ -1,8 +1,7 @@
 cargo run --release -- create-pool --config-index <index> --price <initial_price> --mint0 <MINT0_PUBKEY> --mint1 <MINT1_PUBKEY> --open-time <unix_timestamp>
 
-cargo run --release -- create-pool --config-index 1 --price 1.0 --mint0   --mint1  
 
-
+cargo run --release --manifest-path /root/rust_tutorial/contract_roadmap/6.implementation/1.anchor_tutorial/fun-uniswap-v3/Cargo.toml -- create-pool --config-index 2 --price 1.0 --mint0 13tkegLcV4EnLVmohrVzAjzZ36xRM3vuyvjXT8uk5Zok --mint1 So11111111111111111111111111111111111111112
 
 cargo run --release -- create-config \
      --config-index <u16> \

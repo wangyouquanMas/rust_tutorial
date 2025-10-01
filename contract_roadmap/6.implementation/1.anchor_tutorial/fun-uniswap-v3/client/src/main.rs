@@ -3,7 +3,7 @@ use anyhow::{format_err, Result};
 use solana_client::{
     rpc_client::RpcClient,
 };
-use clap::Parser; 
+use clap::{Parser, Subcommand}; 
 use fun_uniswap_v3::{
     states::{AMM_CONFIG_SEED},
 };
@@ -24,15 +24,33 @@ use std::str::FromStr;
 mod instructions;
 use instructions::amm_instructions::*;
 use instructions::rpc::*;
+use instructions::utils::*;
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Subcommand)]
 pub enum CommandsName {
     CreateConfig {
+        #[arg(long)]
         config_index: u16,
+        #[arg(long)]
         tick_spacing: u16,
+        #[arg(long)]
         trade_fee_rate: u32,
+        #[arg(long)]
         protocol_fee_rate: u32,
+        #[arg(long)]
         fund_fee_rate: u32,
+    },
+    CreatePool {
+        #[arg(long)]
+        config_index: u16,
+        #[arg(long)]
+        price: f64,
+        #[arg(long)]
+        mint0: Pubkey,
+        #[arg(long)]
+        mint1: Pubkey,
+        #[arg(short, long, default_value_t = 0)]
+        open_time: u64,
     },
 }
 
@@ -127,8 +145,13 @@ fn read_keypair_file(s: &str) -> Result<Keypair> {
 
 fn main() -> Result<()> {
     println!("Starting...");
-    let client_config = "client_config.ini";
-    let pool_config = load_cfg(&client_config.to_string()).unwrap();
+    let opts = Opts::parse();
+
+    let client_config = match std::env::var("CLIENT_CONFIG") {
+        Ok(path) if !path.is_empty() => path,
+        _ => "client_config.ini".to_string(),
+    };
+    let pool_config = load_cfg(&client_config)?;
        // Admin and cluster params.
        let payer = read_keypair_file(&pool_config.payer_path)?;
        let admin = read_keypair_file(&pool_config.admin_path)?;
@@ -142,7 +165,6 @@ fn main() -> Result<()> {
     let anchor_client = Client::new(url, Rc::new(wallet));
     let program = anchor_client.program(pool_config.raydium_v3_program)?;
 
-    let opts = Opts::parse();
     match opts.command{
         CommandsName::CreateConfig {
             config_index,
@@ -179,19 +201,19 @@ fn main() -> Result<()> {
             open_time,
         } => {
            let mut price = price;
-           let mut mint0 = mint0;
-           let mut mint1 = mitn1;
+            let mut mint0 = mint0;
+            let mut mint1 = mint1;
 
            //TODO: custom process to make mint0 < mint1
            // price = mint1 / mint0
            if mint0 > mint1 {
-             std::mem::swap(&mut mint0， &mut mint1);
-             price = 1.0 / pric3;
+             std::mem::swap(&mut mint0, &mut mint1);
+             price = 1.0 / price;
              println!("Token swapped!")
            }
             
-           let load_pubkeys = vec![ming0,mint1];
-           let rsps = rpc_client.get_multiple_accounts(&load_pubkeys)?
+           let load_pubkeys = vec![mint0,mint1];
+           let rsps = rpc_client.get_multiple_accounts(&load_pubkeys)?;
 
            let mint0_owner = rsps[0].clone().unwrap().owner;
            let mint1_owner = rsps[1].clone().unwrap().owner;
@@ -211,6 +233,7 @@ fn main() -> Result<()> {
         //TODO: Formula to do conversion.
         let sqrt_price_x64  = price_to_sqrt_price_x64(price,mint0_decimals,mint1_decimals);
 
+        println!("mint0:{}, mint1:{}, price:{}, sqrt_price_x64:{}", mint0_decimals, mint1_decimals, price, sqrt_price_x64);
 
         
         }
