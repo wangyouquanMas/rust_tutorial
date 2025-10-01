@@ -6,7 +6,7 @@ use solana_client::{
 };
 use clap::{Parser, Subcommand}; 
 use fun_uniswap_v3::{
-    libraries::{tick_math},
+    libraries::{tick_math,liquidity_math},
     states::{AMM_CONFIG_SEED, POOL_SEED, POOL_TICK_ARRAY_BITMAP_SEED},
 };
 use solana_sdk::{
@@ -408,6 +408,32 @@ fn main() -> Result<()> {
                 "tick_lower_index:{}, tick_upper_index:{}",
                 tick_lower_index, tick_upper_index
             );
+
+            let tick_lower_price_x64 = tick_math::get_sqrt_price_at_tick(tick_lower_index)?;
+            let tick_upper_price_x64 = tick_math::get_sqrt_price_at_tick(tick_upper_index)?;
+            println!("tick_lower_price_x64: {}", tick_lower_price_x64);
+            println!("tick_upper_price_x64: {}", tick_upper_price_x64);
+
+
+            let liquidity = if is_base_0 {
+                println!("is base 0");
+                liquidity_math::get_liquidity_from_single_amount_0(
+                    pool.sqrt_price_x64,
+                    tick_lower_price_x64,
+                    tick_upper_price_x64,
+                    input_amount,
+                )
+            } else {
+                liquidity_math::get_liquidity_from_single_amount_1(
+                    pool.sqrt_price_x64,
+                    tick_lower_price_x64,
+                    tick_upper_price_x64,
+                    input_amount,
+                )
+            };
+            println!("liquidity: {}", liquidity);
+
+      
 
               // load position
               let position_nft_infos = get_all_nft_and_position_by_owner(
