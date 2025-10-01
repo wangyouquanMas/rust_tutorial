@@ -125,6 +125,7 @@ pub fn create_pool_instr(
         token_program_0,
         token_program_1,
         system_program: system_program::id(),
+        rent: sysvar::rent::id(),
     })
     .args(instruction::CreatePool {
         sqrt_price_x64,

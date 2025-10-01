@@ -54,6 +54,18 @@ pub enum CommandsName {
         #[arg(short, long, default_value_t = 0)]
         open_time: u64,
     },
+    OpenPosition {
+        #[arg(long)]
+        tick_lower_price: f64,
+        #[arg(long)]
+        tick_upper_price: f64,
+        #[arg(short, long)]
+        is_base_0: bool,
+        #[arg(long)]
+        input_amount: u64,
+        #[arg(short, long)]
+        with_metadata: bool,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -68,6 +80,7 @@ pub struct ClientConfig {
 
     mint0: Option<Pubkey>,
     mint1: Option<Pubkey>,
+    pool_id_account: Option<Pubkey>,
     amm_config_index: u16,
 }
 
@@ -124,6 +137,27 @@ fn load_cfg(client_config: &String) -> Result<ClientConfig> {
         ],
         &raydium_v3_program,
     );
+    let pool_id_account = if mint0 != None && mint1 != None {
+        if mint0.unwrap() > mint1.unwrap() {
+            let temp_mint = mint0;
+            mint0 = mint1;
+            mint1 = temp_mint;
+        }
+        Some(
+            Pubkey::find_program_address(
+                &[
+                    fun_uniswap_v3::states::POOL_SEED.as_bytes(),
+                    amm_config_key.to_bytes().as_ref(),
+                    mint0.unwrap().to_bytes().as_ref(),
+                    mint1.unwrap().to_bytes().as_ref(),
+                ],
+                &raydium_v3_program,
+            )
+            .0,
+        )
+    } else {
+        None
+    };
 
  
     Ok(ClientConfig {
@@ -136,6 +170,7 @@ fn load_cfg(client_config: &String) -> Result<ClientConfig> {
         amm_config_key,
         mint0,
         mint1,
+        pool_id_account,
         amm_config_index,
     })
 }
@@ -289,7 +324,6 @@ fn main() -> Result<()> {
                 correct_bitmap, // Use the correctly calculated bitmap
                 sqrt_price_x64,
          )?;
-
             // send
             let signers = vec![&payer];
             let recent_hash = rpc_client.get_latest_blockhash()?;
@@ -302,6 +336,65 @@ fn main() -> Result<()> {
             let signature = send_txn(&rpc_client, &txn, true)?;
             println!("{}", signature);
         }
+
+        CommandsName::OpenPosition {
+            tick_lower_price,
+            tick_upper_price,
+            is_base_0,
+            input_amount,
+            with_metadata,
+        } => {
+            println!("Opening position with parameters:");
+            println!("- Lower price: {}", tick_lower_price);
+            println!("- Upper price: {}", tick_upper_price);
+            println!("- Is base token 0: {}", is_base_0);
+            println!("- Input amount: {}", input_amount);
+            println!("- With metadata: {}", with_metadata);
+            
+
+            println!("pool_config.pool_id_account: {}", pool_config.pool_id_account.unwrap());
+
+            // load pool to get observation
+            let pool: fun_uniswap_v3::states::PoolState =
+                program.account(pool_config.pool_id_account.unwrap())?;
+            
+            // Copy packed fields to local variables for safe access
+            let sqrt_price_x64 = pool.sqrt_price_x64;
+            let tick_current = pool.tick_current;
+            let tick_spacing = pool.tick_spacing;
+            let token_mint_0 = pool.token_mint_0;
+            let token_mint_1 = pool.token_mint_1;
+
+            println!("\nPool information:");
+            println!("- Pool ID: {}", pool_config.pool_id_account.unwrap());
+            println!("- Token 0: {}", token_mint_0);
+            println!("- Token 1: {}", token_mint_1);
+            println!("- Current sqrt price: {}", sqrt_price_x64);
+            println!("- Current tick: {}", tick_current);
+
+            println!("pool.mint_decimals_0: {}", pool.mint_decimals_0);
+            println!("pool.mint_decimals_1: {}", pool.mint_decimals_1);
+
+            // 计算 tickLower/tickUpper
+            let tick_lower_price_x64 = price_to_sqrt_price_x64(
+                tick_lower_price,
+                pool.mint_decimals_0,
+                pool.mint_decimals_1,
+            );
+            let tick_upper_price_x64 = price_to_sqrt_price_x64(
+                tick_upper_price,
+                pool.mint_decimals_0,
+                pool.mint_decimals_1,
+            );
+
+            println!("tick_lower_price_x64: {}", tick_lower_price_x64);
+            println!("tick_upper_price_x64: {}", tick_upper_price_x64);
+            
+
+        }
+
+
+
     }
     Ok(())
 }

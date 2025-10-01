@@ -80,6 +80,8 @@ pub struct CreatePool<'info> {
     pub token_program_1: Interface<'info, TokenInterface>,
     /// To create a new program account
     pub system_program: Program<'info, System>,
+    /// Sysvar for program account
+    pub rent: Sysvar<'info, Rent>,
 }
 
 pub fn create_pool(ctx: Context<CreatePool>, sqrt_price_x64: u128) -> Result<()> {

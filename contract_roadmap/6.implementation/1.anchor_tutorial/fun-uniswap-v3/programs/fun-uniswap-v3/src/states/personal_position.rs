@@ -1,3 +1,14 @@
+use anchor_lang::prelude::*;
+
+// Number of rewards Token
+pub const REWARD_NUM: usize = 3;
+
+#[derive(Copy, Clone, AnchorSerialize, AnchorDeserialize, Default, Debug, PartialEq)]
+pub struct PositionRewardInfo {
+    // Q64.64
+    pub growth_inside_last_x64: u128,
+    pub reward_amount_owed: u64,
+}
 
 #[account]
 #[derive(Default, Debug)]
