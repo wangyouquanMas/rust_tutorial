@@ -253,6 +253,21 @@ fn main() -> Result<()> {
             tick, price, sqrt_price_x64, amm_config_key
         );
 
+        // Calculate the correct bitmap based on the final ordered mints
+        let (pool_key, _) = Pubkey::find_program_address(
+                &[
+                    fun_uniswap_v3::states::POOL_SEED.as_bytes(),
+                    amm_config_key.to_bytes().as_ref(),
+                    mint0.to_bytes().as_ref(),
+                    mint1.to_bytes().as_ref(),
+                ],
+                &pool_config.raydium_v3_program,
+        );
+
+        println!("pool_key:{}", pool_key);
+
+
+
         }
     }
     Ok(())
