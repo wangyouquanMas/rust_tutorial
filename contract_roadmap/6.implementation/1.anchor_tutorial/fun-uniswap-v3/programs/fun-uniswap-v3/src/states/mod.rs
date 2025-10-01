@@ -4,3 +4,5 @@ pub mod pool;
 pub use pool::*;
 pub mod personal_position;
 pub use personal_position::*;
+pub mod protocol_position;
+pub use protocol_position::*;
