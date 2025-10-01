@@ -1,4 +1,5 @@
 use fun_uniswap_v3::libraries::fixed_point_64;
+use std::ops::{DerefMut, Mul, Neg};
 
 
 pub fn multipler(decimals: u8) -> f64{
@@ -20,4 +21,13 @@ pub fn tick_with_spacing(tick: i32, tick_spacing: i32) -> i32 {
         compressed -= 1; // round towards negative infinity
     }
     compressed * tick_spacing
+}
+
+
+pub fn amount_with_slippage(amount: u64, slippage: f64, round_up: bool) -> u64 {
+    if round_up {
+        (amount as f64).mul(1_f64 + slippage).ceil() as u64
+    } else {
+        (amount as f64).mul(1_f64 - slippage).floor() as u64
+    }
 }

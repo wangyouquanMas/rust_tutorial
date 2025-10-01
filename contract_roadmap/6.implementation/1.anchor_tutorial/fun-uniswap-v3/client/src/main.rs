@@ -432,7 +432,7 @@ fn main() -> Result<()> {
                 )
             };
             println!("liquidity: {}", liquidity);
-            
+
             let (amount_0, amount_1) = liquidity_math::get_delta_amounts_signed(
                 pool.tick_current,
                 pool.sqrt_price_x64,
@@ -445,6 +445,15 @@ fn main() -> Result<()> {
             println!("- Amount 1: {}", amount_1);
             println!("- Liquidity: {}", liquidity);
       
+
+            // calc with slippage
+            let amount_0_with_slippage =
+                amount_with_slippage(amount_0 as u64, pool_config.slippage, true);
+            let amount_1_with_slippage =
+                amount_with_slippage(amount_1 as u64, pool_config.slippage, true);
+            println!("\nAmounts with slippage:");
+            println!("- Amount 0 with slippage: {}", amount_0_with_slippage);
+            println!("- Amount 1 with slippage: {}", amount_1_with_slippage);
 
               // load position
               let position_nft_infos = get_all_nft_and_position_by_owner(
