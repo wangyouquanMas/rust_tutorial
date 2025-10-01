@@ -52,6 +52,11 @@ pub fn amount_with_slippage(amount: u64, slippage: f64, round_up: bool) -> u64 {
 }
 
 
+pub fn deserialize_anchor_account<T: AccountDeserialize>(account: &Account) -> Result<T> {
+    let mut data: &[u8] = &account.data;
+    T::try_deserialize(&mut data).map_err(Into::into)
+}
+
 
 pub fn get_pool_mints_inverse_fee(
     rpc_client: &RpcClient,

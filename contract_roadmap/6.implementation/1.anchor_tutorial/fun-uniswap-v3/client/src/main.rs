@@ -1,3 +1,4 @@
+use anchor_lang::prelude::AccountMeta;
 use anchor_client::{Client, Cluster};
 use anyhow::{format_err, Result};
 use solana_client::{
@@ -32,6 +33,9 @@ use solana_account_decoder::{
     parse_token::{TokenAccountType, UiAccountState},
     UiAccountData, UiAccountEncoding,
 };
+
+use spl_associated_token_account::get_associated_token_address;
+
 
 #[derive(Debug, Subcommand)]
 pub enum CommandsName {
@@ -86,6 +90,7 @@ pub struct ClientConfig {
     mint0: Option<Pubkey>,
     mint1: Option<Pubkey>,
     pool_id_account: Option<Pubkey>,
+    tickarray_bitmap_extension: Option<Pubkey>,
     amm_config_index: u16,
 }
 
@@ -163,8 +168,22 @@ fn load_cfg(client_config: &String) -> Result<ClientConfig> {
     } else {
         None
     };
-
- 
+    let tickarray_bitmap_extension = if pool_id_account != None {
+        Some(
+            Pubkey::find_program_address(
+                &[
+                    POOL_TICK_ARRAY_BITMAP_SEED.as_bytes(),
+                    pool_id_account.unwrap().to_bytes().as_ref(),
+                ],
+                &raydium_v3_program,
+            )
+            .0,
+        )
+    } else {
+        None
+    };
+    println!("tickarray_bitmap_extension: {:?}", tickarray_bitmap_extension);
+    
     Ok(ClientConfig {
         http_url,
         ws_url,
@@ -176,6 +195,7 @@ fn load_cfg(client_config: &String) -> Result<ClientConfig> {
         mint0,
         mint1,
         pool_id_account,
+        tickarray_bitmap_extension,
         amm_config_index,
     })
 }
@@ -492,7 +512,7 @@ fn main() -> Result<()> {
             println!("- Lower array start index: {}", tick_array_lower_start_index);
             println!("- Upper array start index: {}", tick_array_upper_start_index);
 
-
+        
               // load position
               let position_nft_infos = get_all_nft_and_position_by_owner(
                 &rpc_client,
@@ -501,7 +521,54 @@ fn main() -> Result<()> {
             );
             println!("\nFound {} existing positions", position_nft_infos.len());
             
+            let positions: Vec<Pubkey> = position_nft_infos
+            .iter()
+            .map(|item| item.position)
+            .collect();
+        let rsps = rpc_client.get_multiple_accounts(&positions)?;
+        let mut user_positions = Vec::new();
+        for rsp in rsps {
+            match rsp {
+                None => continue,
+                Some(rsp) => {
+                    let position = deserialize_anchor_account::<
+                        fun_uniswap_v3::states::PersonalPositionState,
+                    >(&rsp)?;
+                    user_positions.push(position);
+                }
+            }
+        }
+        let mut find_position = fun_uniswap_v3::states::PersonalPositionState::default();
+        for position in user_positions {
+            if position.pool_id == pool_config.pool_id_account.unwrap()
+                && position.tick_lower_index == tick_lower_index
+                && position.tick_upper_index == tick_upper_index
+            {
+                find_position = position.clone();
+            }
+        }
+        if find_position.nft_mint == Pubkey::default() {
+            println!("\nNo existing position found, creating new position...");
+            // personal position not exist
+            // new nft mint
+            let nft_mint = Keypair::new();
+            println!("- New NFT mint address: {}", nft_mint.pubkey());
             
+            let mut remaining_accounts = Vec::new();
+            remaining_accounts.push(AccountMeta::new(
+                pool_config.tickarray_bitmap_extension.unwrap(),
+                false,
+            ));
+            println!("- Tick array bitmap extension: {}", pool_config.tickarray_bitmap_extension.unwrap());
+
+        } else {
+            // personal position exist
+            println!("\nPosition already exists:");
+            println!("- NFT mint: {}", find_position.nft_mint);
+            println!("- Pool ID: {}", find_position.pool_id);
+            println!("- Lower tick: {}", find_position.tick_lower_index);
+            println!("- Upper tick: {}", find_position.tick_upper_index);
+        }
 
         }
 
