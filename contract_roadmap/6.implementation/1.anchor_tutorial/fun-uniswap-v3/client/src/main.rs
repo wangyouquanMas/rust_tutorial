@@ -235,7 +235,18 @@ fn main() -> Result<()> {
 
         println!("mint0:{}, mint1:{}, price:{}, sqrt_price_x64:{}", mint0_decimals, mint1_decimals, price, sqrt_price_x64);
 
-        
+        //get amm config key
+        let (amm_config_key, __bump) = Pubkey::find_program_address(
+            &[
+                fun_uniswap_v3::states::AMM_CONFIG_SEED.as_bytes(),
+                &config_index.to_be_bytes(),
+            ],
+            &pool_config.raydium_v3_program,
+        );
+
+        println!("amm_config_key:{}",amm_config_key)
+
+
         }
     }
     Ok(())
