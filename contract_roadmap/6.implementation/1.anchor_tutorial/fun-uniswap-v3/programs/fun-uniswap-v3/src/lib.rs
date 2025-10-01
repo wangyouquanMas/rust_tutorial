@@ -46,6 +46,13 @@ pub mod fun_uniswap_v3 {
             fund_fee_rate,
         )
     }
+
+    pub fn create_pool(
+        ctx: Context<CreatePool>,
+        sqrt_price_x64: u128,
+    ) -> Result<()> {
+        instructions::create_pool::create_pool(ctx, sqrt_price_x64)
+    }
 }
 
 #[derive(Accounts)]
