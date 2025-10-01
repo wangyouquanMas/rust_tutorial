@@ -5,6 +5,7 @@ use solana_client::{
 };
 use clap::{Parser, Subcommand}; 
 use fun_uniswap_v3::{
+    libraries::{tick_math},
     states::{AMM_CONFIG_SEED},
 };
 use solana_sdk::{
@@ -244,8 +245,13 @@ fn main() -> Result<()> {
             &pool_config.raydium_v3_program,
         );
 
-        println!("amm_config_key:{}",amm_config_key)
+        println!("amm_config_key:{}",amm_config_key);
 
+        let tick = tick_math::get_tick_at_sqrt_price(sqrt_price_x64).unwrap();
+        println!(
+            "tick:{}, price:{}, sqrt_price_x64:{}, amm_config_key:{}",
+            tick, price, sqrt_price_x64, amm_config_key
+        );
 
         }
     }
