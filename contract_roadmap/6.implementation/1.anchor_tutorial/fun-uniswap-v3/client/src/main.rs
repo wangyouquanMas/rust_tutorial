@@ -6,7 +6,7 @@ use solana_client::{
 use clap::{Parser, Subcommand}; 
 use fun_uniswap_v3::{
     libraries::{tick_math},
-    states::{AMM_CONFIG_SEED},
+    states::{AMM_CONFIG_SEED, POOL_SEED, POOL_TICK_ARRAY_BITMAP_SEED},
 };
 use solana_sdk::{
     pubkey::Pubkey,
@@ -26,6 +26,7 @@ mod instructions;
 use instructions::amm_instructions::*;
 use instructions::rpc::*;
 use instructions::utils::*;
+
 
 #[derive(Debug, Subcommand)]
 pub enum CommandsName {
@@ -256,7 +257,7 @@ fn main() -> Result<()> {
         // Calculate the correct bitmap based on the final ordered mints
         let (pool_key, _) = Pubkey::find_program_address(
                 &[
-                    fun_uniswap_v3::states::POOL_SEED.as_bytes(),
+                    POOL_SEED.as_bytes(),
                     amm_config_key.to_bytes().as_ref(),
                     mint0.to_bytes().as_ref(),
                     mint1.to_bytes().as_ref(),
@@ -266,6 +267,18 @@ fn main() -> Result<()> {
 
         println!("pool_key:{}", pool_key);
 
+        let (correct_bitmap, _) = Pubkey::find_program_address(
+            &[
+                POOL_TICK_ARRAY_BITMAP_SEED.as_bytes(),
+                pool_key.to_bytes().as_ref(),
+            ],
+            &pool_config.raydium_v3_program,
+        );
+
+        println!("correct_bitmap:{}", correct_bitmap);
+
+
+        
 
 
         }

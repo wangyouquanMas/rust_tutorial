@@ -1,4 +1,5 @@
 pub const POOL_SEED: &str = "pool";
+pub const POOL_TICK_ARRAY_BITMAP_SEED: &str = "pool_tick_array_bitmap_extension";
 
 
 // #[account(zero_copy(unsafe))]
