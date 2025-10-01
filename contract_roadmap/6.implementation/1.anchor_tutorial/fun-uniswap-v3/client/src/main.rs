@@ -278,7 +278,17 @@ fn main() -> Result<()> {
         println!("correct_bitmap:{}", correct_bitmap);
 
 
-        
+
+        let create_pool_instr = create_pool_instr(
+                &pool_config.clone(),
+                amm_config_key,
+                mint0,
+                mint1,
+                mint0_owner,
+                mint1_owner,
+                correct_bitmap, // Use the correctly calculated bitmap
+                sqrt_price_x64,
+         )?;
 
 
         }
