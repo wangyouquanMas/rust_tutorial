@@ -13,3 +13,11 @@ pub fn price_to_sqrt_price_x64(price: f64, decimals_0: u8, decimals_1:u8) -> u12
 pub fn price_to_x64(price: f64) -> u128{
     (price * fixed_point_64::Q64 as f64) as u128
 }
+
+pub fn tick_with_spacing(tick: i32, tick_spacing: i32) -> i32 {
+    let mut compressed = tick / tick_spacing;
+    if tick < 0 && tick % tick_spacing != 0 {
+        compressed -= 1; // round towards negative infinity
+    }
+    compressed * tick_spacing
+}

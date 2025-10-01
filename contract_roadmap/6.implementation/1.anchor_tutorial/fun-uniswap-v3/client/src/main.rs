@@ -395,6 +395,19 @@ fn main() -> Result<()> {
             println!("tick_lower_price_x64: {}", tick_lower_price_x64);
             println!("tick_upper_price_x64: {}", tick_upper_price_x64);
 
+            let tick_lower_index = tick_with_spacing(
+                tick_math::get_tick_at_sqrt_price(tick_lower_price_x64)?,
+                tick_spacing.into(),
+            );
+            let tick_upper_index = tick_with_spacing(
+                tick_math::get_tick_at_sqrt_price(tick_upper_price_x64)?,
+                tick_spacing.into(),
+            );
+
+            println!(
+                "tick_lower_index:{}, tick_upper_index:{}",
+                tick_lower_index, tick_upper_index
+            );
 
               // load position
               let position_nft_infos = get_all_nft_and_position_by_owner(
