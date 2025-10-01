@@ -207,6 +207,12 @@ fn main() -> Result<()> {
         //TODO: Token mint data structure contains the field: decimals
         let mint1_account = spl_token::state::Mint::unpack(&rsps[1].as_ref().unwrap().data).unwrap();
         let mint1_decimals = mint1_account.decimals;
+
+        //TODO: Formula to do conversion.
+        let sqrt_price_x64  = price_to_sqrt_price_x64(price,mint0_decimals,mint1_decimals);
+
+
+        
         }
     }
     Ok(())
