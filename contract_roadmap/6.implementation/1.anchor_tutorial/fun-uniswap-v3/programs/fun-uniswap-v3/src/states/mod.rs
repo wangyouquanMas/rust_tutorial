@@ -6,3 +6,5 @@ pub mod personal_position;
 pub use personal_position::*;
 pub mod protocol_position;
 pub use protocol_position::*;
+pub mod tick_array;
+pub use tick_array::*;

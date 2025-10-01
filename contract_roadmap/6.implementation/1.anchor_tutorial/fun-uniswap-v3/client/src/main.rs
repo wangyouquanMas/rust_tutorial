@@ -478,6 +478,20 @@ fn main() -> Result<()> {
             println!("- Max amount 0: {}", amount_0_max);
             println!("- Max amount 1: {}", amount_1_max);
 
+            let tick_array_lower_start_index =
+            fun_uniswap_v3::states::TickArrayState::get_array_start_index(
+                tick_lower_index,
+                tick_spacing.into(),
+            );
+            let tick_array_upper_start_index =
+                fun_uniswap_v3::states::TickArrayState::get_array_start_index(
+                    tick_upper_index,
+                    tick_spacing.into(),
+                );
+            println!("\nTick array indices:");
+            println!("- Lower array start index: {}", tick_array_lower_start_index);
+            println!("- Upper array start index: {}", tick_array_upper_start_index);
+
 
               // load position
               let position_nft_infos = get_all_nft_and_position_by_owner(

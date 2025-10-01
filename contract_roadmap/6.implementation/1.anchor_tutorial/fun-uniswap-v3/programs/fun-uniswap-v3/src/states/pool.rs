@@ -7,6 +7,8 @@ pub const POOL_SEED: &str = "pool";
 pub const POOL_TICK_ARRAY_BITMAP_SEED: &str = "pool_tick_array_bitmap_extension";
 pub const POOL_VAULT_SEED: &str = "pool_vault";
 
+// Number of rewards Token
+pub const REWARD_NUM: usize = 3;
 
 
 #[account(zero_copy(unsafe))]
