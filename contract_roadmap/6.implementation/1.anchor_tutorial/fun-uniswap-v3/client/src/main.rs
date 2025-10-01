@@ -171,6 +171,43 @@ fn main() -> Result<()> {
             let signature = send_txn(&rpc_client, &txn, true)?;
             println!("{}", signature);
         }
+        CommandsName::CreatePool {
+            config_index,
+            price,
+            mint0,
+            mint1,
+            open_time,
+        } => {
+           let mut price = price;
+           let mut mint0 = mint0;
+           let mut mint1 = mitn1;
+
+           //TODO: custom process to make mint0 < mint1
+           // price = mint1 / mint0
+           if mint0 > mint1 {
+             std::mem::swap(&mut mint0， &mut mint1);
+             price = 1.0 / pric3;
+             println!("Token swapped!")
+           }
+            
+           let load_pubkeys = vec![ming0,mint1];
+           let rsps = rpc_client.get_multiple_accounts(&load_pubkeys)?
+
+           let mint0_owner = rsps[0].clone().unwrap().owner;
+           let mint1_owner = rsps[1].clone().unwrap().owner;
+
+        //handle native SQL token (mint0) differently
+        //TODO: system program is the owner of wsol 
+        let mint0_decimals = if mint0_owner == system_program::id(){
+            9 // SOL has 9 decimals 
+        }else{
+            let mint0_account = spl_token::state::Mint::unpack(&rsps[0].as_ref().unwrap().data).unwrap();
+            mint0_account.decimals
+        };
+        //TODO: Token mint data structure contains the field: decimals
+        let mint1_account = spl_token::state::Mint::unpack(&rsps[1].as_ref().unwrap().data).unwrap();
+        let mint1_decimals = mint1_account.decimals;
+        }
     }
     Ok(())
 }
