@@ -112,15 +112,6 @@ pub fn create_pool_instr(
     );
     println!("  token_vault_1: {} (bump: {})", token_vault_1, vault1_bump);
     
-    // let (observation_key, obs_bump) = Pubkey::find_program_address(
-    //     &[
-    //         OBSERVATION_SEED.as_bytes(),
-    //         pool_account_key.to_bytes().as_ref(),
-    //     ],
-    //     &program.id(),
-    // );
-    // println!("  observation_key: {} (bump: {})", observation_key, obs_bump);
-
     let instructions = program
     .request()
     .accounts(accounts::CreatePool {
@@ -131,12 +122,9 @@ pub fn create_pool_instr(
         token_mint_1,
         token_vault_0,
         token_vault_1,
-        // observation_state: observation_key,
-        // tick_array_bitmap,
         token_program_0,
         token_program_1,
         system_program: system_program::id(),
-        rent: sysvar::rent::id(),
     })
     .args(instruction::CreatePool {
         sqrt_price_x64,

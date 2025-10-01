@@ -290,7 +290,17 @@ fn main() -> Result<()> {
                 sqrt_price_x64,
          )?;
 
-
+            // send
+            let signers = vec![&payer];
+            let recent_hash = rpc_client.get_latest_blockhash()?;
+            let txn = Transaction::new_signed_with_payer(
+                &create_pool_instr,
+                Some(&payer.pubkey()),
+                &signers,
+                recent_hash,
+            );
+            let signature = send_txn(&rpc_client, &txn, true)?;
+            println!("{}", signature);
         }
     }
     Ok(())

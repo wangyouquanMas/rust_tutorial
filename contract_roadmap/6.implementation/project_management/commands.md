@@ -9,5 +9,5 @@ cargo run --release -- create-config \
      --trade-fee-rate <u32> \
      --protocol-fee-rate <u32> \
      --fund-fee-rate <u32>
-    
-cargo run --release -- create-config 1 60 600 1200 800
+     
+client create-config --config-index 2 --tick-spacing 60 --trade-fee-rate 600 --protocol-fee-rate 1200 --fund-fee-rate 800

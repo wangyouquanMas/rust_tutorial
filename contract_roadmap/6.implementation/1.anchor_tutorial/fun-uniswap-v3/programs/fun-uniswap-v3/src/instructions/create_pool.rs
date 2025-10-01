@@ -73,31 +73,6 @@ pub struct CreatePool<'info> {
     )]
     pub token_vault_1: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    // /// Initialize an account to store oracle observations
-    // #[account(
-    //     init,
-    //     seeds = [
-    //         OBSERVATION_SEED.as_bytes(),
-    //         pool_state.key().as_ref(),
-    //     ],
-    //     bump,
-    //     payer = pool_creator,
-    //     space = ObservationState::LEN
-    // )]
-    // pub observation_state: AccountLoader<'info, ObservationState>,
-
-    /// Initialize an account to store if a tick array is initialized.
-    // #[account(
-    //     init,
-    //     seeds = [
-    //         POOL_TICK_ARRAY_BITMAP_SEED.as_bytes(),
-    //         pool_state.key().as_ref(),
-    //     ],
-    //     bump,
-    //     payer = pool_creator,
-    //     space = TickArrayBitmapExtension::LEN
-    // )]
-    // pub tick_array_bitmap: AccountLoader<'info, TickArrayBitmapExtension>,
 
     /// Spl token program or token program 2022
     pub token_program_0: Interface<'info, TokenInterface>,
@@ -105,44 +80,9 @@ pub struct CreatePool<'info> {
     pub token_program_1: Interface<'info, TokenInterface>,
     /// To create a new program account
     pub system_program: Program<'info, System>,
-    /// Sysvar for program account
-    pub rent: Sysvar<'info, Rent>,
-    // remaining account
-    // #[account(
-    //     seeds = [
-    //     SUPPORT_MINT_SEED.as_bytes(),
-    //     token_mint_0.key().as_ref(),
-    // ],
-    //     bump
-    // )]
-    // pub support_mint0_associated: Account<'info, SupportMintAssociated>,
-
-    // #[account(
-    //     seeds = [
-    //     SUPPORT_MINT_SEED.as_bytes(),
-    //     token_mint_1.key().as_ref(),
-    // ],
-    //     bump
-    // )]
-    // pub support_mint1_associated: Account<'info, SupportMintAssociated>,
 }
 
 pub fn create_pool(ctx: Context<CreatePool>, sqrt_price_x64: u128) -> Result<()> {
-    // let mint0_associated_is_initialized = util::support_mint_associated_is_initialized(
-    //     &ctx.remaining_accounts,
-    //     &ctx.accounts.token_mint_0,
-    // )?;
-    // let mint1_associated_is_initialized = util::support_mint_associated_is_initialized(
-    //     &ctx.remaining_accounts,
-    //     &ctx.accounts.token_mint_1,
-    // )?;
-    // if !(util::is_supported_mint(&ctx.accounts.token_mint_0, mint0_associated_is_initialized)
-    //     .unwrap()
-    //     && util::is_supported_mint(&ctx.accounts.token_mint_1, mint1_associated_is_initialized)
-    //         .unwrap())
-    // {
-    //     return err!(ErrorCode::NotSupportMint);
-    // }
     let block_timestamp = solana_program::clock::Clock::get()?.unix_timestamp as u64;
     // let pool_id = ctx.accounts.pool_state.key();
     let mut pool_state = ctx.accounts.pool_state.load_init()?;
@@ -154,11 +94,6 @@ pub fn create_pool(ctx: Context<CreatePool>, sqrt_price_x64: u128) -> Result<()>
         sqrt_price_x64,
         tick
     );
-    // // init observation
-    // ctx.accounts
-    //     .observation_state
-    //     .load_init()?
-    //     .initialize(pool_id)?;
 
     let bump = ctx.bumps.pool_state;
     pool_state.initialize(
@@ -171,22 +106,7 @@ pub fn create_pool(ctx: Context<CreatePool>, sqrt_price_x64: u128) -> Result<()>
         ctx.accounts.amm_config.as_ref(),
         ctx.accounts.token_mint_0.as_ref(),
         ctx.accounts.token_mint_1.as_ref(),
-        // ctx.accounts.observation_state.key(),
     )?;
-    // ctx.accounts
-    //     .tick_array_bitmap
-    //     .load_init()?
-    //     .initialize(pool_id);
-
-    // emit!(PoolCreatedEvent {
-    //     token_mint_0: ctx.accounts.token_mint_0.key(),
-    //     token_mint_1: ctx.accounts.token_mint_1.key(),
-    //     tick_spacing: ctx.accounts.amm_config.tick_spacing,
-    //     pool_state: ctx.accounts.pool_state.key(),
-    //     sqrt_price_x64,
-    //     tick,
-    //     token_vault_0: ctx.accounts.token_vault_0.key(),
-    //     token_vault_1: ctx.accounts.token_vault_1.key(),
-    // });
     Ok(())
 }
+
