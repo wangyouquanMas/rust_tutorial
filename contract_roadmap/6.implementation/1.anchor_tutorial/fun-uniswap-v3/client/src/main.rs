@@ -1,0 +1,176 @@
+use anchor_client::{Client, Cluster};
+use anyhow::{format_err, Result};
+use solana_client::{
+    rpc_client::RpcClient,
+};
+use clap::Parser; 
+use fun_uniswap_v3::{
+    states::{AMM_CONFIG_SEED},
+};
+use solana_sdk::{
+    pubkey::Pubkey,
+    signature::{Keypair,Signer},
+    system_program,
+    transaction::Transaction,
+    program_pack::Pack,
+};
+use configparser::ini::Ini;
+use std::rc::Rc;
+use spl_token_2022::{
+    state::Mint,
+};
+use std::str::FromStr;
+
+mod instructions;
+use instructions::amm_instructions::*;
+use instructions::rpc::*;
+
+#[derive(Debug, Parser)]
+pub enum CommandsName {
+    CreateConfig {
+        config_index: u16,
+        tick_spacing: u16,
+        trade_fee_rate: u32,
+        protocol_fee_rate: u32,
+        fund_fee_rate: u32,
+    },
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct ClientConfig {
+    http_url: String,
+    ws_url: String,
+    payer_path: String,
+    admin_path: String,
+    raydium_v3_program: Pubkey,
+    slippage: f64,
+    amm_config_key: Pubkey,
+
+    mint0: Option<Pubkey>,
+    mint1: Option<Pubkey>,
+    amm_config_index: u16,
+}
+
+#[derive(Debug, Parser)]
+pub struct Opts {
+    #[clap(subcommand)]
+    pub command: CommandsName,
+}
+
+
+fn load_cfg(client_config: &String) -> Result<ClientConfig> {
+    let mut config = Ini::new();
+    let _map = config.load(client_config).unwrap();
+    let http_url = config.get("Global", "http_url").unwrap();
+    if http_url.is_empty() {
+        panic!("http_url must not be empty");
+    }
+    let ws_url = config.get("Global", "ws_url").unwrap();
+    if ws_url.is_empty() {
+        panic!("ws_url must not be empty");
+    }
+    let payer_path = config.get("Global", "payer_path").unwrap();
+    if payer_path.is_empty() {
+        panic!("payer_path must not be empty");
+    }
+    let admin_path = config.get("Global", "admin_path").unwrap();
+    if admin_path.is_empty() {
+        panic!("admin_path must not be empty");
+    }
+
+    let raydium_v3_program_str = config.get("Global", "raydium_v3_program").unwrap();
+    if raydium_v3_program_str.is_empty() {
+        panic!("raydium_v3_program must not be empty");
+    }
+    let raydium_v3_program = Pubkey::from_str(&raydium_v3_program_str).unwrap();
+    let slippage = config.getfloat("Global", "slippage").unwrap().unwrap();
+
+    let mut mint0 = None;
+    let mint0_str = config.get("Pool", "mint0").unwrap();
+    if !mint0_str.is_empty() {
+        mint0 = Some(Pubkey::from_str(&mint0_str).unwrap());
+    }
+    let mut mint1 = None;
+    let mint1_str = config.get("Pool", "mint1").unwrap();
+    if !mint1_str.is_empty() {
+        mint1 = Some(Pubkey::from_str(&mint1_str).unwrap());
+    }
+    let amm_config_index = config.getuint("Pool", "amm_config_index").unwrap().unwrap() as u16;
+
+    let (amm_config_key, __bump) = Pubkey::find_program_address(
+        &[
+            fun_uniswap_v3::states::AMM_CONFIG_SEED.as_bytes(),
+            &amm_config_index.to_be_bytes(),
+        ],
+        &raydium_v3_program,
+    );
+
+ 
+    Ok(ClientConfig {
+        http_url,
+        ws_url,
+        payer_path,
+        admin_path,
+        raydium_v3_program,
+        slippage,
+        amm_config_key,
+        mint0,
+        mint1,
+        amm_config_index,
+    })
+}
+
+fn read_keypair_file(s: &str) -> Result<Keypair> {
+    solana_sdk::signature::read_keypair_file(s)
+        .map_err(|_| format_err!("failed to read keypair from {}", s))
+}
+
+fn main() -> Result<()> {
+    println!("Starting...");
+    let client_config = "client_config.ini";
+    let pool_config = load_cfg(&client_config.to_string()).unwrap();
+       // Admin and cluster params.
+       let payer = read_keypair_file(&pool_config.payer_path)?;
+       let admin = read_keypair_file(&pool_config.admin_path)?;
+    // solana rpc client
+    let rpc_client = RpcClient::new(pool_config.http_url.to_string());
+
+    // anchor client.
+    let anchor_config = pool_config.clone();
+    let url = Cluster::Custom(anchor_config.http_url, anchor_config.ws_url);
+    let wallet = read_keypair_file(&pool_config.payer_path)?;
+    let anchor_client = Client::new(url, Rc::new(wallet));
+    let program = anchor_client.program(pool_config.raydium_v3_program)?;
+
+    let opts = Opts::parse();
+    match opts.command{
+        CommandsName::CreateConfig {
+            config_index,
+            tick_spacing,
+            trade_fee_rate,
+            protocol_fee_rate,
+            fund_fee_rate,
+        } => {
+            let create_instr = create_amm_config_instr(
+                &pool_config.clone(),
+                config_index,
+                tick_spacing,
+                trade_fee_rate,
+                protocol_fee_rate,
+                fund_fee_rate,
+            )?;
+            // send
+            let signers = vec![&payer, &admin];
+            let recent_hash = rpc_client.get_latest_blockhash()?;
+            let txn = Transaction::new_signed_with_payer(
+                &create_instr,
+                Some(&payer.pubkey()),
+                &signers,
+                recent_hash,
+            );
+            let signature = send_txn(&rpc_client, &txn, true)?;
+            println!("{}", signature);
+        }
+    }
+    Ok(())
+}
