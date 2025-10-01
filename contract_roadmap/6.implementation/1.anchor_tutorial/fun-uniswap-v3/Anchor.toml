@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-fun_uniswap_v3 = "7GagSvwxqA9cqpGCUfNH2xoEj1EkAw5NGSfqjhH7wBY8"
+fun_uniswap_v3 = "DVCq6TyPx1Xfy22NPFDNVkpyk7PzozpsFJCmbBjCCpSd"
 
 [registry]
 url = "https://api.apr.dev"

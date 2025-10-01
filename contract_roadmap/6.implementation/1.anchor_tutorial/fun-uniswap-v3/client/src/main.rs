@@ -432,7 +432,18 @@ fn main() -> Result<()> {
                 )
             };
             println!("liquidity: {}", liquidity);
-
+            
+            let (amount_0, amount_1) = liquidity_math::get_delta_amounts_signed(
+                pool.tick_current,
+                pool.sqrt_price_x64,
+                tick_lower_index,
+                tick_upper_index,
+                liquidity as i128,
+            )?;
+            println!("\nCalculated amounts:");
+            println!("- Amount 0: {}", amount_0);
+            println!("- Amount 1: {}", amount_1);
+            println!("- Liquidity: {}", liquidity);
       
 
               // load position

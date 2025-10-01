@@ -9,7 +9,7 @@ pub mod libraries;
 use instructions::*;
 pub use core as core_;
 
-declare_id!("7GagSvwxqA9cqpGCUfNH2xoEj1EkAw5NGSfqjhH7wBY8");
+declare_id!("DVCq6TyPx1Xfy22NPFDNVkpyk7PzozpsFJCmbBjCCpSd");
 
 
 pub mod admin {
